@@ -1,0 +1,84 @@
+# Terraform-specific .gitignore
+# Additional security layer for infrastructure directory
+
+# ===== TERRAFORM STATE FILES =====
+# These contain sensitive data like passwords, private keys, etc.
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+terraform.tfstate.d/
+
+# Terraform lock files
+.terraform.lock.hcl
+.terraform/
+
+# ===== VARIABLE FILES WITH SECRETS =====
+# Never commit actual variable files that might contain secrets
+*.tfvars
+*.tfvars.json
+terraform.tfvars
+terraform.tfvars.json
+secret.tfvars
+secrets.tfvars
+prod.tfvars
+production.tfvars
+
+# Keep example and template files
+!example.tfvars
+!template.tfvars
+!*.tfvars.example
+!*.tfvars.template
+
+# ===== TERRAFORM PLANS =====
+# Plan files may contain sensitive information
+*.tfplan
+tfplan*
+*.plan
+*.out
+
+# ===== TERRAFORM LOGS =====
+crash.log
+crash.*.log
+*.log
+
+# ===== OVERRIDE FILES =====
+# Override files may contain secrets or sensitive configurations
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# ===== PROVIDER CREDENTIALS =====
+# Cloud provider credential files
+.aws/
+.azure/
+.gcloud/
+*.json
+*-key.json
+service-account*.json
+
+# ===== TEMPORARY FILES =====
+.terraformrc
+terraform.rc
+*.tmp
+*.temp
+*.backup
+
+# ===== ENVIRONMENT-SPECIFIC FILES =====
+# Files that might contain environment-specific secrets
+local.tf
+local.tfvars
+dev-local.tf*
+staging-local.tf*
+prod-local.tf*
+
+# ===== MODULES CACHE =====
+.terraform.d/
+modules/
+
+# ===== IDE FILES =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
