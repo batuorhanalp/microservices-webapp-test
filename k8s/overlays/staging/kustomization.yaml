@@ -1,0 +1,74 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: webapp-staging-overlay
+
+# Base configuration
+resources:
+  - ../../base
+  - namespace.yaml
+
+# Staging-specific labels
+labels:
+- pairs:
+    environment: staging
+    tier: staging
+
+# Staging-specific annotations
+commonAnnotations:
+  environment: staging
+  deployment.kubernetes.io/revision: "1"
+
+# Staging namespace
+namespace: webapp-staging
+
+# Staging image tags (use release candidates)
+images:
+  - name: webapp-frontend
+    newTag: v1.2.3-rc1
+  - name: webapp-api
+    newTag: v1.2.3-rc1
+  - name: webapp-websocket
+    newTag: v1.2.3-rc1
+  - name: webapp-auth
+    newTag: v1.2.3-rc1
+
+# Staging-specific configuration
+configMapGenerator:
+  - name: webapp-env-config
+    behavior: replace
+    literals:
+      - ENV=staging
+      - LOG_LEVEL=info
+      - DEBUG=false
+      - CORS_ORIGIN=https://staging.webapp.example.com
+      - SESSION_TIMEOUT=1800  # 30 minutes
+      - FILE_UPLOAD_MAX_SIZE=50mb
+      - RATE_LIMIT_WINDOW=60
+      - RATE_LIMIT_MAX=500
+      - CACHE_TTL=60
+      - DB_POOL_SIZE=10
+      - DB_TIMEOUT=15000
+      - ENABLE_METRICS=true
+      - ENABLE_TRACING=true
+      - HEALTH_CHECK_INTERVAL=30
+
+# Staging replica counts (lower than production)
+replicas:
+  - name: webapp-frontend
+    count: 2
+  - name: webapp-api
+    count: 2
+  - name: webapp-websocket
+    count: 2
+  - name: webapp-auth-deployment
+    count: 2
+  - name: prometheus-deployment
+    count: 1
+  - name: grafana-deployment
+    count: 1
+
+# Staging resource limits (smaller than production)
+# patchesStrategicMerge:
+#   - staging-resources.yaml

@@ -1,0 +1,291 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-auth-deployment
+  labels:
+    app: webapp-production
+    component: auth
+    tier: backend
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: webapp-production
+      component: auth
+  template:
+    metadata:
+      labels:
+        app: webapp-production
+        component: auth
+        tier: backend
+    spec:
+      serviceAccountName: webapp-auth-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
+      containers:
+      - name: auth-service
+        image: webapp-auth:latest  # Replace with actual image
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 3003
+          name: http
+          protocol: TCP
+        - containerPort: 9093
+          name: metrics
+          protocol: TCP
+        
+        env:
+        # Application configuration
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "3003"
+        - name: METRICS_PORT
+          value: "9093"
+        - name: LOG_LEVEL
+          value: "info"
+        
+        # Database configuration
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: db_host
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: db_name
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: webapp-secrets
+              key: db_user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: webapp-secrets
+              key: db_password
+        
+        # Redis configuration
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: redis_host
+        - name: REDIS_PORT
+          value: "6379"
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: webapp-secrets
+              key: redis_password
+        
+        # JWT configuration
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: webapp-secrets
+              key: jwt_secret
+        - name: JWT_EXPIRES_IN
+          value: "24h"
+        - name: JWT_REFRESH_EXPIRES_IN
+          value: "7d"
+        
+        # OAuth configuration (optional)
+        - name: GOOGLE_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: webapp-oauth-secrets
+              key: google_client_id
+              optional: true
+        - name: GOOGLE_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: webapp-oauth-secrets
+              key: google_client_secret
+              optional: true
+        - name: GITHUB_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: webapp-oauth-secrets
+              key: github_client_id
+              optional: true
+        - name: GITHUB_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: webapp-oauth-secrets
+              key: github_client_secret
+              optional: true
+        
+        # Email configuration
+        - name: SMTP_HOST
+          valueFrom:
+            secretKeyRef:
+              name: webapp-email-secrets
+              key: smtp_host
+              optional: true
+        - name: SMTP_PORT
+          value: "587"
+        - name: SMTP_USER
+          valueFrom:
+            secretKeyRef:
+              name: webapp-email-secrets
+              key: smtp_user
+              optional: true
+        - name: SMTP_PASS
+          valueFrom:
+            secretKeyRef:
+              name: webapp-email-secrets
+              key: smtp_pass
+              optional: true
+        - name: FROM_EMAIL
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: from_email
+              optional: true
+        
+        # Security configuration
+        - name: BCRYPT_ROUNDS
+          value: "12"
+        - name: SESSION_TIMEOUT
+          value: "1800" # 30 minutes
+        - name: MAX_LOGIN_ATTEMPTS
+          value: "5"
+        - name: ACCOUNT_LOCKOUT_TIME
+          value: "900" # 15 minutes
+        
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3003
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3003
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+        
+        startupProbe:
+          httpGet:
+            path: /startup
+            port: 3003
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 30
+        
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+        
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: var-cache
+          mountPath: /var/cache
+        - name: logs
+          mountPath: /app/logs
+      
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: var-cache
+        emptyDir: {}
+      - name: logs
+        emptyDir: {}
+      
+      nodeSelector:
+        kubernetes.io/os: linux
+      
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values: ["auth"]
+              topologyKey: kubernetes.io/hostname
+      
+      terminationGracePeriodSeconds: 60
+
+---
+# Service Account for Auth Service
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: webapp-auth-sa
+  labels:
+    app: webapp-production
+    component: auth
+
+---
+# Role for Auth Service
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: webapp-auth-role
+  labels:
+    app: webapp-production
+    component: auth
+rules:
+- apiGroups: [""]
+  resources: ["secrets", "configmaps"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+
+---
+# Role Binding for Auth Service
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: webapp-auth-rolebinding
+  labels:
+    app: webapp-production
+    component: auth
+subjects:
+- kind: ServiceAccount
+  name: webapp-auth-sa
+  namespace: default  # Will be overridden by kustomize
+roleRef:
+  kind: Role
+  name: webapp-auth-role
+  apiGroup: rbac.authorization.k8s.io

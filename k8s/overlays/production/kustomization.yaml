@@ -1,0 +1,89 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: webapp-production-overlay
+
+# Base configuration
+resources:
+  - ../../base
+  - namespace.yaml
+
+# Production-specific labels
+labels:
+- pairs:
+    environment: production
+    tier: production
+
+# Production-specific annotations
+commonAnnotations:
+  environment: production
+  deployment.kubernetes.io/revision: "1"
+
+# Production namespace
+namespace: webapp-production
+
+# Production image tags (use specific versions, not latest)
+images:
+  - name: webapp-frontend
+    newTag: v1.2.3
+  - name: webapp-api
+    newTag: v1.2.3
+  - name: webapp-websocket
+    newTag: v1.2.3
+  - name: webapp-auth
+    newTag: v1.2.3
+
+# Production-specific configuration
+configMapGenerator:
+  - name: webapp-env-config
+    behavior: replace
+    literals:
+      - ENV=production
+      - LOG_LEVEL=warn
+      - DEBUG=false
+      - CORS_ORIGIN=https://webapp.example.com,https://app.webapp.example.com
+      - SESSION_TIMEOUT=3600  # 1 hour
+      - FILE_UPLOAD_MAX_SIZE=100mb
+      - RATE_LIMIT_WINDOW=60
+      - RATE_LIMIT_MAX=1000
+      - CACHE_TTL=300
+      - DB_POOL_SIZE=20
+      - DB_TIMEOUT=30000
+      - ENABLE_METRICS=true
+      - ENABLE_TRACING=true
+      - HEALTH_CHECK_INTERVAL=30
+
+# Production replica counts (high availability)
+replicas:
+  - name: webapp-frontend
+    count: 5
+  - name: webapp-api
+    count: 5
+  - name: webapp-websocket
+    count: 5
+  - name: webapp-auth-deployment
+    count: 5
+  - name: prometheus-deployment
+    count: 1  # Prometheus typically runs single instance
+  - name: grafana-deployment
+    count: 2  # Grafana can be HA
+
+# Resource patches for production workloads
+# patchesStrategicMerge:
+#   - production-resources.yaml
+
+# JSON patches for specific modifications
+# patchesJson6902:
+#   - target:
+#       group: apps
+#       version: v1
+#       kind: Deployment
+#       name: webapp-frontend-deployment
+#     path: production-frontend-patch.yaml
+#   - target:
+#       group: apps
+#       version: v1
+#       kind: Deployment
+#       name: webapp-api-deployment
+#     path: production-backend-patch.yaml

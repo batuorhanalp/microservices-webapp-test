@@ -1,0 +1,360 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-websocket
+  labels:
+    app: webapp-production
+    component: websocket
+    version: v1.0.0
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: webapp-production
+      component: websocket
+  template:
+    metadata:
+      labels:
+        app: webapp-production
+        component: websocket
+        version: v1.0.0
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: websocket
+        image: node:18-alpine
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - |
+          # Create a Socket.io WebSocket server
+          cat > app.js << 'EOF'
+          const express = require('express');
+          const { createServer } = require('http');
+          const { Server } = require('socket.io');
+          const cors = require('cors');
+          
+          const app = express();
+          const httpServer = createServer(app);
+          const port = process.env.WEBSOCKET_PORT || 3002;
+          
+          // CORS configuration
+          app.use(cors({
+            origin: process.env.CORS_ORIGIN || '*',
+            credentials: true
+          }));
+          
+          // Socket.io setup
+          const io = new Server(httpServer, {
+            cors: {
+              origin: process.env.CORS_ORIGIN || '*',
+              methods: ['GET', 'POST']
+            },
+            pingTimeout: parseInt(process.env.WS_HEARTBEAT_INTERVAL) || 30000,
+            pingInterval: 25000
+          });
+          
+          let connectedClients = 0;
+          const maxConnections = parseInt(process.env.WS_MAX_CONNECTIONS) || 1000;
+          
+          // Health check endpoint
+          app.get('/health', (req, res) => {
+            res.json({
+              status: 'healthy',
+              service: 'websocket',
+              connections: connectedClients,
+              maxConnections: maxConnections,
+              timestamp: new Date().toISOString(),
+              version: process.env.REACT_APP_VERSION || '1.0.0',
+              uptime: process.uptime()
+            });
+          });
+          
+          // Metrics endpoint for Prometheus
+          app.get('/metrics', (req, res) => {
+            res.set('Content-Type', 'text/plain');
+            res.send(`
+          # HELP webapp_websocket_connections_total Total WebSocket connections
+          # TYPE webapp_websocket_connections_total counter
+          webapp_websocket_connections_total ${connectedClients}
+          
+          # HELP webapp_websocket_active_connections Active WebSocket connections
+          # TYPE webapp_websocket_active_connections gauge
+          webapp_websocket_active_connections ${connectedClients}
+          
+          # HELP webapp_websocket_messages_total Total WebSocket messages
+          # TYPE webapp_websocket_messages_total counter
+          webapp_websocket_messages_total 500
+          
+          # HELP webapp_websocket_connection_duration_seconds WebSocket connection duration
+          # TYPE webapp_websocket_connection_duration_seconds histogram
+          webapp_websocket_connection_duration_seconds_bucket{le="10"} 20
+          webapp_websocket_connection_duration_seconds_bucket{le="30"} 50
+          webapp_websocket_connection_duration_seconds_bucket{le="60"} 80
+          webapp_websocket_connection_duration_seconds_bucket{le="+Inf"} 100
+          `);
+          });
+          
+          // Socket.io connection handling
+          io.on('connection', (socket) => {
+            connectedClients++;
+            console.log(`✅ Client connected: ${socket.id} (Total: ${connectedClients})`);
+            
+            // Check connection limit
+            if (connectedClients > maxConnections) {
+              console.log(`❌ Connection limit exceeded. Disconnecting ${socket.id}`);
+              socket.emit('error', { message: 'Connection limit exceeded' });
+              socket.disconnect();
+              connectedClients--;
+              return;
+            }
+            
+            // Send welcome message
+            socket.emit('welcome', {
+              message: 'Connected to WebApp Production WebSocket',
+              clientId: socket.id,
+              timestamp: new Date().toISOString(),
+              server: 'webapp-websocket',
+              version: process.env.REACT_APP_VERSION || '1.0.0'
+            });
+            
+            // Handle chat messages
+            socket.on('chat:message', (data) => {
+              console.log(`💬 Chat message from ${socket.id}:`, data);
+              
+              // Broadcast to all clients
+              io.emit('chat:message', {
+                id: Date.now(),
+                clientId: socket.id,
+                message: data.message,
+                username: data.username || 'Anonymous',
+                timestamp: new Date().toISOString()
+              });
+            });
+            
+            // Handle notifications
+            socket.on('notification:send', (data) => {
+              console.log(`🔔 Notification from ${socket.id}:`, data);
+              
+              // Broadcast notification
+              io.emit('notification:received', {
+                id: Date.now(),
+                type: data.type || 'info',
+                title: data.title || 'Notification',
+                message: data.message,
+                timestamp: new Date().toISOString()
+              });
+            });
+            
+            // Handle real-time updates
+            socket.on('realtime:subscribe', (data) => {
+              console.log(`📡 Client ${socket.id} subscribed to:`, data.channel);
+              socket.join(data.channel);
+              
+              socket.emit('realtime:subscribed', {
+                channel: data.channel,
+                timestamp: new Date().toISOString()
+              });
+            });
+            
+            socket.on('realtime:unsubscribe', (data) => {
+              console.log(`📡 Client ${socket.id} unsubscribed from:`, data.channel);
+              socket.leave(data.channel);
+              
+              socket.emit('realtime:unsubscribed', {
+                channel: data.channel,
+                timestamp: new Date().toISOString()
+              });
+            });
+            
+            // Handle video events (placeholder)
+            socket.on('video:join-room', (data) => {
+              console.log(`🎥 Client ${socket.id} joined video room:`, data.roomId);
+              socket.join(`video:${data.roomId}`);
+              
+              socket.to(`video:${data.roomId}`).emit('video:user-joined', {
+                clientId: socket.id,
+                username: data.username,
+                timestamp: new Date().toISOString()
+              });
+            });
+            
+            socket.on('video:leave-room', (data) => {
+              console.log(`🎥 Client ${socket.id} left video room:`, data.roomId);
+              socket.leave(`video:${data.roomId}`);
+              
+              socket.to(`video:${data.roomId}`).emit('video:user-left', {
+                clientId: socket.id,
+                timestamp: new Date().toISOString()
+              });
+            });
+            
+            // Handle file upload events
+            socket.on('upload:progress', (data) => {
+              socket.emit('upload:progress-update', {
+                fileId: data.fileId,
+                progress: data.progress,
+                timestamp: new Date().toISOString()
+              });
+            });
+            
+            // Handle ping/pong for connection health
+            socket.on('ping', () => {
+              socket.emit('pong', {
+                timestamp: new Date().toISOString()
+              });
+            });
+            
+            // Handle disconnection
+            socket.on('disconnect', (reason) => {
+              connectedClients--;
+              console.log(`❌ Client disconnected: ${socket.id} (Reason: ${reason}, Total: ${connectedClients})`);
+            });
+            
+            // Error handling
+            socket.on('error', (error) => {
+              console.error(`❌ Socket error for ${socket.id}:`, error);
+            });
+          });
+          
+          // Periodic broadcasts (every 30 seconds)
+          setInterval(() => {
+            if (connectedClients > 0) {
+              io.emit('server:heartbeat', {
+                timestamp: new Date().toISOString(),
+                connectedClients: connectedClients,
+                serverTime: Date.now()
+              });
+            }
+          }, 30000);
+          
+          // Demo data broadcasts (every 10 seconds)
+          if (process.env.NODE_ENV !== 'production') {
+            let demoCounter = 0;
+            setInterval(() => {
+              if (connectedClients > 0) {
+                demoCounter++;
+                io.emit('demo:data-update', {
+                  counter: demoCounter,
+                  randomValue: Math.floor(Math.random() * 100),
+                  timestamp: new Date().toISOString(),
+                  message: `Demo update #${demoCounter}`
+                });
+              }
+            }, 10000);
+          }
+          
+          // Start server
+          httpServer.listen(port, '0.0.0.0', () => {
+            console.log(`🚀 WebSocket server running on port ${port}`);
+            console.log(`Environment: ${process.env.NODE_ENV}`);
+            console.log(`Max connections: ${maxConnections}`);
+            console.log(`Health check: http://localhost:${port}/health`);
+          });
+          EOF
+          
+          # Create package.json
+          cat > package.json << 'EOF'
+          {
+            "name": "webapp-production-websocket",
+            "version": "1.0.0",
+            "description": "Production web app WebSocket server",
+            "main": "app.js",
+            "scripts": {
+              "start": "node app.js",
+              "dev": "nodemon app.js"
+            },
+            "dependencies": {
+              "express": "^4.18.2",
+              "socket.io": "^4.7.2",
+              "cors": "^2.8.5"
+            }
+          }
+          EOF
+          
+          # Install dependencies and start
+          npm install --production --silent
+          npm start
+        ports:
+        - containerPort: 3002
+          name: http
+          protocol: TCP
+        - containerPort: 9090
+          name: metrics
+          protocol: TCP
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: NODE_ENV
+        - name: WEBSOCKET_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: WEBSOCKET_PORT
+        - name: WS_HEARTBEAT_INTERVAL
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: WS_HEARTBEAT_INTERVAL
+        - name: WS_MAX_CONNECTIONS
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: WS_MAX_CONNECTIONS
+        - name: CORS_ORIGIN
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: CORS_ORIGIN
+        - name: REACT_APP_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: REACT_APP_VERSION
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3002
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3002
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+          capabilities:
+            drop:
+            - ALL
+      restartPolicy: Always
+      securityContext:
+        fsGroup: 1000
+      nodeSelector:
+        kubernetes.io/os: linux

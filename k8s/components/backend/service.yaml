@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp-api-service
+  labels:
+    app: webapp-production
+    component: api
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  - name: metrics
+    port: 9091
+    targetPort: 9091
+    protocol: TCP
+  selector:
+    app: webapp-production
+    component: api
+  sessionAffinity: None
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp-api-headless
+  labels:
+    app: webapp-production
+    component: api
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: webapp-production
+    component: api
