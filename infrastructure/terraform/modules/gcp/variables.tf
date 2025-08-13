@@ -1,0 +1,158 @@
+# Variables for GCP module
+
+# === Core Configuration ===
+variable "app_name" {
+  description = "Name of the application"
+  type        = string
+}
+
+variable "environment" {
+  description = "Environment name (dev, staging, prod)"
+  type        = string
+}
+
+variable "region" {
+  description = "GCP region for resource deployment"
+  type        = string
+  default     = "us-central1"
+}
+
+variable "project_id" {
+  description = "GCP Project ID"
+  type        = string
+}
+
+variable "resource_prefix" {
+  description = "Prefix for resource names"
+  type        = string
+}
+
+variable "labels" {
+  description = "Common labels for all resources"
+  type        = map(string)
+  default     = {}
+}
+
+# === Network Configuration ===
+variable "vpc_cidr" {
+  description = "CIDR block for VPC"
+  type        = string
+  default     = "10.0.0.0/16"
+}
+
+variable "subnets" {
+  description = "Subnet configuration"
+  type = object({
+    public  = list(string)
+    private = list(string)
+    data    = list(string)
+  })
+  default = {
+    public  = ["10.0.1.0/24", "10.0.2.0/24"]
+    private = ["10.0.10.0/24", "10.0.11.0/24"]
+    data    = ["10.0.20.0/24", "10.0.21.0/24"]
+  }
+}
+
+variable "authorized_networks" {
+  description = "List of authorized networks for Cloud SQL"
+  type = list(object({
+    name  = string
+    value = string
+  }))
+  default = []
+}
+
+# === Database Configuration ===
+variable "db_admin_username" {
+  description = "Database administrator username"
+  type        = string
+  sensitive   = true
+}
+
+variable "db_admin_password" {
+  description = "Database administrator password"
+  type        = string
+  default     = ""  # Empty default - will be generated if not provided
+  sensitive   = true
+}
+
+variable "grafana_admin_password" {
+  description = "Grafana admin password"
+  type        = string
+  default     = ""  # Empty default - will be generated if not provided
+  sensitive   = true
+}
+
+variable "jwt_secret" {
+  description = "JWT secret for application authentication"
+  type        = string
+  default     = ""  # Empty default - will be generated if not provided
+  sensitive   = true
+}
+
+variable "db_tier" {
+  description = "Cloud SQL instance tier"
+  type        = string
+  default     = "db-f1-micro"
+}
+
+variable "db_disk_size" {
+  description = "Database disk size in GB"
+  type        = number
+  default     = 20
+}
+
+# === Redis Configuration ===
+variable "redis_memory_size" {
+  description = "Memorystore Redis memory size in GB"
+  type        = number
+  default     = 1
+}
+
+# === Kubernetes Configuration ===
+variable "k8s_version" {
+  description = "Kubernetes version"
+  type        = string
+  default     = "1.28"
+}
+
+variable "node_count" {
+  description = "Number of GKE worker nodes"
+  type        = number
+  default     = 2
+}
+
+variable "node_machine_type" {
+  description = "GCE machine type for GKE nodes"
+  type        = string
+  default     = "e2-standard-2"
+}
+
+# === Storage Configuration ===
+variable "storage_class" {
+  description = "Cloud Storage storage class"
+  type        = string
+  default     = "STANDARD"
+}
+
+# === CDN Configuration ===
+variable "domain_name" {
+  description = "Custom domain name for CDN (optional)"
+  type        = string
+  default     = ""
+}
+
+# === Monitoring Configuration ===
+variable "log_retention_days" {
+  description = "Log retention period in days"
+  type        = number
+  default     = 30
+}
+
+# === Security Configuration ===
+variable "allowed_ip_ranges" {
+  description = "IP ranges allowed to access resources"
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
