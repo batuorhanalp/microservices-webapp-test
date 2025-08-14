@@ -58,6 +58,14 @@ public interface IPostRepository
     Task<Post?> GetWithMediaAsync(Guid postId);
 
     /// <summary>
+    /// Gets posts that have media attachments with pagination
+    /// </summary>
+    /// <param name="limit">Maximum number of posts to return</param>
+    /// <param name="offset">Number of posts to skip</param>
+    /// <returns>List of posts with media attachments</returns>
+    Task<IEnumerable<Post>> GetPostsWithMediaAsync(int limit = 20, int offset = 0);
+
+    /// <summary>
     /// Searches posts by content
     /// </summary>
     /// <param name="searchTerm">Term to search for in post content</param>
