@@ -31,12 +31,11 @@ public class AuthDbContext : DbContext
             entity.Property(u => u.Username).IsRequired().HasMaxLength(50);
             entity.Property(u => u.PasswordHash).IsRequired().HasMaxLength(128);
             entity.Property(u => u.DisplayName).HasMaxLength(100);
-            entity.Property(u => u.FirstName).HasMaxLength(50);
-            entity.Property(u => u.LastName).HasMaxLength(50);
             entity.Property(u => u.Bio).HasMaxLength(500);
             entity.Property(u => u.Location).HasMaxLength(100);
             entity.Property(u => u.Website).HasMaxLength(200);
-            entity.Property(u => u.AvatarUrl).HasMaxLength(500);
+            entity.Property(u => u.ProfileImageUrl).HasMaxLength(500);
+            entity.Property(u => u.CoverImageUrl).HasMaxLength(500);
             entity.Property(u => u.EmailConfirmationToken).HasMaxLength(64);
             entity.Property(u => u.TwoFactorSecret).HasMaxLength(32);
 

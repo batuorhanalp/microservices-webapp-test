@@ -151,7 +151,7 @@ public class AuthService : IAuthService
         }
 
         // Check if account is locked
-        if (user.IsLockedOut())
+        if (user.IsLockedOut)
         {
             _logger.LogWarning("Login failed: Account locked for user {UserId}", user.Id);
             throw new UnauthorizedAccessException("Account is temporarily locked due to multiple failed attempts");
@@ -232,7 +232,7 @@ public class AuthService : IAuthService
         }
 
         // Check if token is active
-        if (!refreshToken.IsActive())
+        if (!refreshToken.IsActive)
         {
             _logger.LogWarning("Refresh token {TokenId} is not active", refreshToken.Id);
             throw new UnauthorizedAccessException("Invalid refresh token");
@@ -363,7 +363,7 @@ public class AuthService : IAuthService
             throw new ArgumentException("Invalid reset token", nameof(request.Token));
 
         var resetToken = await _passwordResetTokenRepository.GetByTokenAsync(request.Token, cancellationToken);
-        if (resetToken == null || resetToken.UserId != user.Id || resetToken.IsExpired() || resetToken.IsUsed)
+        if (resetToken == null || resetToken.UserId != user.Id || resetToken.IsExpired || resetToken.IsUsed)
             throw new ArgumentException("Invalid or expired reset token", nameof(request.Token));
 
         // Reset password

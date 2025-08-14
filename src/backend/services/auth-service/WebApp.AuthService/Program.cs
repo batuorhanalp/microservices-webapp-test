@@ -5,6 +5,7 @@ using System.Text;
 using WebApp.AuthService.Data;
 using WebApp.AuthService.Services;
 using WebApp.Common.Interfaces;
+using WebApp.Common.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -58,20 +59,10 @@ builder.Services.AddScoped<IPasswordResetTokenRepository, PasswordResetTokenRepo
 builder.Services.AddScoped<IUserSessionRepository, UserSessionRepository>();
 
 // Register application services
-builder.Services.AddScoped<IPasswordService, PasswordService>();
+builder.Services.AddScoped<IPasswordService, WebApp.Common.Services.PasswordService>();
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<IAuthService>(provider => 
-    new AuthService.Services.AuthService(
-        provider.GetRequiredService<AuthUserRepository>(),
-        provider.GetRequiredService<IRefreshTokenRepository>(),
-        provider.GetRequiredService<IPasswordResetTokenRepository>(),
-        provider.GetRequiredService<IUserSessionRepository>(),
-        provider.GetRequiredService<IPasswordService>(),
-        provider.GetRequiredService<IJwtService>(),
-        provider.GetRequiredService<IEmailService>(),
-        provider.GetRequiredService<ILogger<AuthService.Services.AuthService>>()
-    ));
+builder.Services.AddScoped<IAuthService, WebApp.AuthService.Services.AuthService>();
 
 // Configure JWT settings for services
 builder.Services.Configure<JwtSettings>(options =>

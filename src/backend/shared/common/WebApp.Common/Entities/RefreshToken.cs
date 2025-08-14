@@ -34,6 +34,9 @@ public class RefreshToken
     
     public string? UserAgent { get; private set; }
     
+    // Alias for IpAddress to support legacy code
+    public string? CreatedByIp => IpAddress;
+    
     // Navigation properties
     public User User { get; private set; } = null!;
 
@@ -210,9 +213,9 @@ public class UserSession
     public UserSession(
         Guid userId,
         string sessionId,
+        string ipAddress,
+        string userAgent,
         DateTime expiresAt,
-        string? ipAddress = null,
-        string? userAgent = null,
         string? deviceInfo = null,
         string? location = null)
     {

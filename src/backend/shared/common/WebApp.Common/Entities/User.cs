@@ -220,6 +220,43 @@ public class User
         UpdateTimestamp();
     }
     
+    // Methods expected by AuthService
+    public void GenerateEmailConfirmationToken()
+    {
+        EmailConfirmationToken = Guid.NewGuid().ToString();
+        UpdateTimestamp();
+    }
+    
+    public void RecordFailedLoginAttempt()
+    {
+        RecordFailedLogin();
+    }
+    
+    public void ChangePassword(string newPasswordHash)
+    {
+        UpdatePassword(newPasswordHash);
+    }
+    
+    public void EnableTwoFactorAuthentication(string? secret = null)
+    {
+        var twoFactorSecret = secret ?? GenerateRandomSecret();
+        EnableTwoFactor(twoFactorSecret);
+    }
+    
+    public void DisableTwoFactorAuthentication()
+    {
+        DisableTwoFactor();
+    }
+    
+    private string GenerateRandomSecret()
+    {
+        // Generate a 32-character base32 secret for TOTP
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+        var random = new Random();
+        return new string(Enumerable.Repeat(chars, 32)
+            .Select(s => s[random.Next(s.Length)]).ToArray());
+    }
+    
     public void UpdateEmail(string email)
     {
         if (string.IsNullOrWhiteSpace(email))

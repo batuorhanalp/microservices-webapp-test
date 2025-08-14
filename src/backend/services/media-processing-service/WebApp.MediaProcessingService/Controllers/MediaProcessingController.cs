@@ -272,7 +272,7 @@ public class MediaProcessingController : ControllerBase
     /// Clean up old processing jobs (Admin only)
     /// </summary>
     [HttpPost("cleanup")]
-    [ProducesResponseType(typeof(CleanupResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProcessingCleanupResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ProcessingCleanupResult>> CleanupOldJobsAsync([FromBody] ProcessingCleanupRequest? request = null)
