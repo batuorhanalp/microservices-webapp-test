@@ -68,6 +68,29 @@ public interface ILikeRepository
     Task<bool> ExistsAsync(Guid userId, Guid postId);
 
     /// <summary>
+    /// Gets the count of likes for a specific post
+    /// </summary>
+    /// <param name="postId">Post ID to count likes for</param>
+    /// <returns>Number of likes for the post</returns>
+    Task<int> GetCountByPostAsync(Guid postId);
+
+    /// <summary>
+    /// Gets the count of likes made by a specific user
+    /// </summary>
+    /// <param name="userId">User ID to count likes for</param>
+    /// <returns>Number of likes made by the user</returns>
+    Task<int> GetCountByUserAsync(Guid userId);
+
+    /// <summary>
+    /// Gets users who liked a specific post with pagination
+    /// </summary>
+    /// <param name="postId">Post ID to get users for</param>
+    /// <param name="limit">Maximum number of users to return</param>
+    /// <param name="offset">Number of users to skip for pagination</param>
+    /// <returns>Collection of users who liked the post</returns>
+    Task<IEnumerable<User>> GetUsersByPostAsync(Guid postId, int limit, int offset);
+
+    /// <summary>
     /// Saves all changes to the underlying data store
     /// </summary>
     /// <returns>Number of entities affected</returns>
