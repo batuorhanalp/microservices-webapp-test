@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: webapp-production
+  labels:
+    app: webapp-production
+    environment: production
+    managed-by: kustomize
+  annotations:
+    description: "Production web application namespace"
+    contact: "devops-team"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: webapp-staging
+  labels:
+    app: webapp-production
+    environment: staging
+    managed-by: kustomize
+  annotations:
+    description: "Staging web application namespace"
+    contact: "devops-team"
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: webapp-dev
+  labels:
+    app: webapp-production
+    environment: dev
+    managed-by: kustomize
+  annotations:
+    description: "Development web application namespace"
+    contact: "devops-team"

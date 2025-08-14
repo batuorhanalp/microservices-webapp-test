@@ -1,0 +1,379 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-api
+  labels:
+    app: webapp-production
+    component: api
+    tier: backend
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: webapp-production
+      component: api
+  template:
+    metadata:
+      labels:
+        app: webapp-production
+        component: api
+        tier: backend
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9091"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: webapp-api-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1001
+        fsGroup: 2000
+      containers:
+      - name: api
+        image: webapp-api:latest  # Replace with actual .NET 8 image
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        - containerPort: 9091
+          name: metrics
+          protocol: TCP
+        
+        env:
+        # .NET Core application configuration
+        - name: ASPNETCORE_ENVIRONMENT
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: environment
+              optional: false
+        - name: ASPNETCORE_URLS
+          value: "http://+:8080"
+        - name: ASPNETCORE_CONTENTROOT
+          value: "/app"
+        
+        # Logging configuration
+        - name: Logging__LogLevel__Default
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: log_level
+              optional: false
+        - name: Logging__LogLevel__Microsoft
+          value: "Warning"
+        - name: Logging__LogLevel__Microsoft.Hosting.Lifetime
+          value: "Information"
+        
+        # Database configuration
+        - name: ConnectionStrings__DefaultConnection
+          valueFrom:
+            secretKeyRef:
+              name: webapp-database-url
+              key: database_url
+        - name: Database__Host
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: db_host
+        - name: Database__Port
+          value: "5432"
+        - name: Database__Name
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: db_name
+        - name: Database__Username
+          valueFrom:
+            secretKeyRef:
+              name: webapp-secrets
+              key: db_user
+        - name: Database__Password
+          valueFrom:
+            secretKeyRef:
+              name: webapp-secrets
+              key: db_password
+        
+        # Redis configuration
+        - name: Redis__ConnectionString
+          valueFrom:
+            secretKeyRef:
+              name: webapp-secrets
+              key: redis_connection_string
+              optional: true
+        - name: Redis__Host
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: redis_host
+        - name: Redis__Port
+          value: "6379"
+        - name: Redis__Password
+          valueFrom:
+            secretKeyRef:
+              name: webapp-secrets
+              key: redis_password
+        
+        # JWT configuration
+        - name: JwtSettings__SecretKey
+          valueFrom:
+            secretKeyRef:
+              name: webapp-secrets
+              key: jwt_secret
+        - name: JwtSettings__Issuer
+          value: "webapp-production"
+        - name: JwtSettings__Audience
+          value: "webapp-production"
+        - name: JwtSettings__ExpiryMinutes
+          value: "60"
+        - name: JwtSettings__RefreshExpiryDays
+          value: "7"
+        
+        # API configuration
+        - name: Api__BaseUrl
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: api_base_url
+              optional: false
+        - name: Api__Version
+          value: "v1"
+        - name: Api__MaxRequestSize
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: max_file_size
+              optional: false
+        - name: Api__Timeout
+          value: "30"
+        
+        # CORS configuration
+        - name: Cors__AllowedOrigins
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: cors_origin
+              optional: false
+        - name: Cors__AllowCredentials
+          value: "true"
+        
+        # Rate limiting
+        - name: RateLimit__WindowMinutes
+          value: "1"
+        - name: RateLimit__MaxRequests
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: rate_limit_max
+              optional: false
+        
+        # File upload configuration
+        - name: FileUpload__MaxSize
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: max_file_size
+              optional: false
+        - name: FileUpload__AllowedTypes
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: allowed_file_types
+              optional: true
+        
+        # Feature flags
+        - name: Features__EnableWebSocket
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: enable_websocket
+              optional: true
+        - name: Features__EnableVideoProcessing
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: enable_video_processing
+              optional: true
+        - name: Features__EnableFileUploads
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: enable_file_uploads
+              optional: true
+        - name: Features__EnableRealTimeNotifications
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: enable_real_time_notifications
+              optional: true
+        
+        # Monitoring configuration
+        - name: Metrics__Enabled
+          value: "true"
+        - name: Metrics__Port
+          value: "9091"
+        - name: HealthChecks__Enabled
+          value: "true"
+        
+        # Application insights (if using Azure)
+        - name: ApplicationInsights__InstrumentationKey
+          valueFrom:
+            secretKeyRef:
+              name: webapp-monitoring-secrets
+              key: app_insights_key
+              optional: true
+        
+        # Email configuration (optional)
+        - name: Email__SmtpHost
+          valueFrom:
+            secretKeyRef:
+              name: webapp-email-secrets
+              key: smtp_host
+              optional: true
+        - name: Email__SmtpPort
+          value: "587"
+        - name: Email__SmtpUsername
+          valueFrom:
+            secretKeyRef:
+              name: webapp-email-secrets
+              key: smtp_user
+              optional: true
+        - name: Email__SmtpPassword
+          valueFrom:
+            secretKeyRef:
+              name: webapp-email-secrets
+              key: smtp_pass
+              optional: true
+        
+        # Cache configuration
+        - name: Cache__DefaultExpirationMinutes
+          value: "5"
+        - name: Cache__SlidingExpirationMinutes
+          value: "10"
+        
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        
+        startupProbe:
+          httpGet:
+            path: /health/startup
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+        
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1001
+          capabilities:
+            drop:
+            - ALL
+        
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: var-cache
+          mountPath: /var/cache
+        - name: logs
+          mountPath: /app/logs
+      
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: var-cache
+        emptyDir: {}
+      - name: logs
+        emptyDir: {}
+      
+      nodeSelector:
+        kubernetes.io/os: linux
+      
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values: ["api"]
+              topologyKey: kubernetes.io/hostname
+      
+      terminationGracePeriodSeconds: 30
+
+---
+# Service Account for API Service
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: webapp-api-sa
+  labels:
+    app: webapp-production
+    component: api
+
+---
+# Role for API Service
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: webapp-api-role
+  labels:
+    app: webapp-production
+    component: api
+rules:
+- apiGroups: [""]
+  resources: ["secrets", "configmaps"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list", "watch"]
+
+---
+# Role Binding for API Service
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: webapp-api-rolebinding
+  labels:
+    app: webapp-production
+    component: api
+subjects:
+- kind: ServiceAccount
+  name: webapp-api-sa
+  namespace: default  # Will be overridden by kustomize
+roleRef:
+  kind: Role
+  name: webapp-api-role
+  apiGroup: rbac.authorization.k8s.io

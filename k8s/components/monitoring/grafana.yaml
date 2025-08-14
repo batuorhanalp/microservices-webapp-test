@@ -1,0 +1,430 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-config
+  labels:
+    app: webapp-production
+    component: monitoring
+data:
+  grafana.ini: |
+    [server]
+    root_url = https://grafana.webapp.example.com
+    
+    [database]
+    type = postgres
+    host = ${DB_HOST}:5432
+    name = ${DB_NAME}
+    user = ${DB_USER}
+    password = ${DB_PASSWORD}
+    
+    [session]
+    provider = redis
+    provider_config = addr=${REDIS_HOST}:6379,password=${REDIS_PASSWORD},db=1
+    
+    [security]
+    admin_user = ${GRAFANA_ADMIN_USER}
+    admin_password = ${GRAFANA_ADMIN_PASSWORD}
+    secret_key = ${GRAFANA_SECRET_KEY}
+    
+    [auth]
+    disable_login_form = false
+    oauth_auto_login = false
+    
+    [auth.oauth2]
+    enabled = true
+    name = OAuth
+    auth_url = https://auth.webapp.example.com/oauth2/authorize
+    token_url = https://auth.webapp.example.com/oauth2/token
+    api_url = https://auth.webapp.example.com/oauth2/userinfo
+    client_id = ${OAUTH_CLIENT_ID}
+    client_secret = ${OAUTH_CLIENT_SECRET}
+    scopes = openid profile email
+    
+    [alerting]
+    enabled = true
+    execute_alerts = true
+    
+    [smtp]
+    enabled = true
+    host = ${SMTP_HOST}:587
+    user = ${SMTP_USER}
+    password = ${SMTP_PASS}
+    from_address = alerts@webapp.example.com
+    from_name = WebApp Alerts
+    
+    [log]
+    mode = console
+    level = info
+    
+    [metrics]
+    enabled = true
+    basic_auth_username = ${METRICS_USER}
+    basic_auth_password = ${METRICS_PASSWORD}
+
+  datasources.yml: |
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      access: proxy
+      url: http://prometheus-service:9090
+      isDefault: true
+      editable: false
+    - name: Loki
+      type: loki
+      access: proxy
+      url: http://loki-service:3100
+      editable: false
+    - name: Jaeger
+      type: jaeger
+      access: proxy
+      url: http://jaeger-service:16686
+      editable: false
+
+  dashboards.yml: |
+    apiVersion: 1
+    providers:
+    - name: 'webapp-dashboards'
+      orgId: 1
+      folder: 'WebApp Production'
+      type: file
+      disableDeletion: false
+      updateIntervalSeconds: 60
+      allowUiUpdates: true
+      options:
+        path: /var/lib/grafana/dashboards
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboards
+  labels:
+    app: webapp-production
+    component: monitoring
+data:
+  webapp-overview.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "WebApp Production Overview",
+        "description": "Main dashboard for webapp production monitoring",
+        "tags": ["webapp", "production", "overview"],
+        "timezone": "UTC",
+        "panels": [
+          {
+            "title": "System Overview",
+            "type": "stat",
+            "targets": [
+              {
+                "expr": "up{job=~\"webapp-.*\"}"
+              }
+            ]
+          },
+          {
+            "title": "Request Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(http_requests_total[5m])"
+              }
+            ]
+          },
+          {
+            "title": "Response Time",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))"
+              }
+            ]
+          },
+          {
+            "title": "Error Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(http_requests_total{status=~\"5..\"}[5m])"
+              }
+            ]
+          }
+        ],
+        "time": {
+          "from": "now-1h",
+          "to": "now"
+        },
+        "refresh": "30s"
+      }
+    }
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana-deployment
+  labels:
+    app: webapp-production
+    component: monitoring
+    service: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webapp-production
+      component: monitoring
+      service: grafana
+  template:
+    metadata:
+      labels:
+        app: webapp-production
+        component: monitoring
+        service: grafana
+    spec:
+      serviceAccountName: grafana-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 472
+        fsGroup: 0
+      containers:
+      - name: grafana
+        image: grafana/grafana:10.1.0
+        ports:
+        - containerPort: 3000
+          name: http
+          protocol: TCP
+        env:
+        # Database configuration
+        - name: DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: db_host
+        - name: DB_NAME
+          value: grafana
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: grafana-secrets
+              key: db_user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: grafana-secrets
+              key: db_password
+        
+        # Redis configuration
+        - name: REDIS_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: redis_host
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: webapp-secrets
+              key: redis_password
+        
+        # Grafana authentication
+        - name: GRAFANA_ADMIN_USER
+          value: admin
+        - name: GRAFANA_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: grafana-secrets
+              key: admin_password
+        - name: GRAFANA_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: grafana-secrets
+              key: secret_key
+        
+        # OAuth configuration
+        - name: OAUTH_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: grafana-oauth-secrets
+              key: client_id
+              optional: true
+        - name: OAUTH_CLIENT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: grafana-oauth-secrets
+              key: client_secret
+              optional: true
+        
+        # SMTP configuration
+        - name: SMTP_HOST
+          valueFrom:
+            secretKeyRef:
+              name: webapp-email-secrets
+              key: smtp_host
+              optional: true
+        - name: SMTP_USER
+          valueFrom:
+            secretKeyRef:
+              name: webapp-email-secrets
+              key: smtp_user
+              optional: true
+        - name: SMTP_PASS
+          valueFrom:
+            secretKeyRef:
+              name: webapp-email-secrets
+              key: smtp_pass
+              optional: true
+        
+        # Metrics authentication
+        - name: METRICS_USER
+          valueFrom:
+            secretKeyRef:
+              name: grafana-secrets
+              key: metrics_user
+        - name: METRICS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: grafana-secrets
+              key: metrics_password
+        
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+        
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          capabilities:
+            drop:
+            - ALL
+        
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/grafana/grafana.ini
+          subPath: grafana.ini
+        - name: datasources-volume
+          mountPath: /etc/grafana/provisioning/datasources/datasources.yml
+          subPath: datasources.yml
+        - name: dashboards-config-volume
+          mountPath: /etc/grafana/provisioning/dashboards/dashboards.yml
+          subPath: dashboards.yml
+        - name: dashboards-volume
+          mountPath: /var/lib/grafana/dashboards
+        - name: storage-volume
+          mountPath: /var/lib/grafana
+      
+      volumes:
+      - name: config-volume
+        configMap:
+          name: grafana-config
+      - name: datasources-volume
+        configMap:
+          name: grafana-config
+      - name: dashboards-config-volume
+        configMap:
+          name: grafana-config
+      - name: dashboards-volume
+        configMap:
+          name: grafana-dashboards
+      - name: storage-volume
+        persistentVolumeClaim:
+          claimName: grafana-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-service
+  labels:
+    app: webapp-production
+    component: monitoring
+    service: grafana
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "3000"
+    prometheus.io/path: "/metrics"
+spec:
+  type: ClusterIP
+  ports:
+  - port: 3000
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: webapp-production
+    component: monitoring
+    service: grafana
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-pvc
+  labels:
+    app: webapp-production
+    component: monitoring
+    service: grafana
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: fast-ssd
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: grafana-sa
+  labels:
+    app: webapp-production
+    component: monitoring
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: grafana-role
+  labels:
+    app: webapp-production
+    component: monitoring
+rules:
+- apiGroups: [""]
+  resources: ["secrets", "configmaps"]
+  verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: grafana-rolebinding
+  labels:
+    app: webapp-production
+    component: monitoring
+subjects:
+- kind: ServiceAccount
+  name: grafana-sa
+  namespace: default  # Will be overridden by kustomize
+roleRef:
+  kind: Role
+  name: grafana-role
+  apiGroup: rbac.authorization.k8s.io

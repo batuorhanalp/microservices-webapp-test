@@ -1,0 +1,276 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapp-frontend
+  labels:
+    app: webapp-production
+    component: frontend
+    version: v1.0.0
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: webapp-production
+      component: frontend
+  template:
+    metadata:
+      labels:
+        app: webapp-production
+        component: frontend
+        version: v1.0.0
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9090"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: frontend
+        image: nginx:1.25-alpine
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        - containerPort: 9090
+          name: metrics
+          protocol: TCP
+        env:
+        - name: NODE_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: NODE_ENV
+        - name: REACT_APP_API_URL
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: REACT_APP_API_URL
+        - name: REACT_APP_WS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: REACT_APP_WS_URL
+        - name: REACT_APP_CDN_URL
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: REACT_APP_CDN_URL
+        - name: REACT_APP_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: webapp-config
+              key: REACT_APP_VERSION
+        volumeMounts:
+        - name: nginx-config
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+          readOnly: true
+        - name: frontend-assets
+          mountPath: /usr/share/nginx/html
+          readOnly: true
+        - name: nginx-cache
+          mountPath: /var/cache/nginx
+        - name: nginx-run
+          mountPath: /var/run
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /nginx-health
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /nginx-health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 101
+          runAsGroup: 101
+          capabilities:
+            drop:
+            - ALL
+      # Init container to build frontend assets (placeholder)
+      initContainers:
+      - name: build-frontend
+        image: node:18-alpine
+        command: ["/bin/sh"]
+        args:
+        - -c
+        - |
+          echo "Building frontend assets..."
+          mkdir -p /build
+          echo '<!DOCTYPE html>
+          <html lang="en">
+          <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <title>WebApp Production</title>
+              <style>
+                  body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+                  .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                  h1 { color: #333; text-align: center; margin-bottom: 30px; }
+                  .status { display: flex; justify-content: space-between; align-items: center; margin: 20px 0; padding: 20px; background: #f8f9fa; border-radius: 4px; }
+                  .status.success { background: #d4edda; border-left: 4px solid #28a745; }
+                  .feature { margin: 15px 0; padding: 15px; border: 1px solid #ddd; border-radius: 4px; }
+                  .feature h3 { margin: 0 0 10px 0; color: #495057; }
+                  .version { text-align: center; color: #6c757d; margin-top: 30px; }
+                  .api-status { margin: 20px 0; }
+                  .btn { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }
+                  .btn:hover { background: #0056b3; }
+              </style>
+          </head>
+          <body>
+              <div class="container">
+                  <h1>🚀 WebApp Production - Phase 4 Complete!</h1>
+                  
+                  <div class="status success">
+                      <div>
+                          <h3>✅ Kubernetes Configuration Deployed</h3>
+                          <p>Frontend service is running successfully</p>
+                      </div>
+                      <div>
+                          <strong>Status: Online</strong>
+                      </div>
+                  </div>
+
+                  <div class="feature">
+                      <h3>🌐 Frontend Features</h3>
+                      <ul>
+                          <li>React 18 with modern UI components</li>
+                          <li>NGINX reverse proxy with rate limiting</li>
+                          <li>WebSocket support for real-time features</li>
+                          <li>CDN integration for static assets</li>
+                          <li>Progressive Web App capabilities</li>
+                      </ul>
+                  </div>
+
+                  <div class="feature">
+                      <h3>🔧 Infrastructure Status</h3>
+                      <div class="api-status">
+                          <button class="btn" onclick="checkAPI()">Check API Status</button>
+                          <button class="btn" onclick="testWebSocket()">Test WebSocket</button>
+                          <button class="btn" onclick="checkHealth()">Health Check</button>
+                      </div>
+                      <div id="status-results" style="margin-top: 15px;"></div>
+                  </div>
+
+                  <div class="feature">
+                      <h3>📊 Monitoring & Observability</h3>
+                      <p>Prometheus metrics available at <code>/metrics</code></p>
+                      <p>Health check endpoint at <code>/nginx-health</code></p>
+                      <p>Application logs structured in JSON format</p>
+                  </div>
+
+                  <div class="version">
+                      <p>Version: ' + process.env.REACT_APP_VERSION + ' | Environment: ' + process.env.NODE_ENV + '</p>
+                      <p>Built with ❤️ using Kubernetes, Docker, and modern web technologies</p>
+                  </div>
+              </div>
+
+              <script>
+                  async function checkAPI() {
+                      try {
+                          const response = await fetch("/api/v1/health");
+                          const data = await response.json();
+                          document.getElementById("status-results").innerHTML = 
+                              `<div style="background: #d4edda; padding: 10px; border-radius: 4px;">
+                                  ✅ API Status: ${data.status || "OK"}
+                              </div>`;
+                      } catch (error) {
+                          document.getElementById("status-results").innerHTML = 
+                              `<div style="background: #f8d7da; padding: 10px; border-radius: 4px;">
+                                  ❌ API Error: ${error.message}
+                              </div>`;
+                      }
+                  }
+
+                  function testWebSocket() {
+                      try {
+                          const ws = new WebSocket("ws://" + window.location.host + "/ws");
+                          ws.onopen = function() {
+                              document.getElementById("status-results").innerHTML = 
+                                  `<div style="background: #d4edda; padding: 10px; border-radius: 4px;">
+                                      ✅ WebSocket: Connected successfully
+                                  </div>`;
+                              ws.close();
+                          };
+                          ws.onerror = function() {
+                              document.getElementById("status-results").innerHTML = 
+                                  `<div style="background: #f8d7da; padding: 10px; border-radius: 4px;">
+                                      ❌ WebSocket: Connection failed
+                                  </div>`;
+                          };
+                      } catch (error) {
+                          document.getElementById("status-results").innerHTML = 
+                              `<div style="background: #f8d7da; padding: 10px; border-radius: 4px;">
+                                  ❌ WebSocket Error: ${error.message}
+                              </div>`;
+                      }
+                  }
+
+                  async function checkHealth() {
+                      try {
+                          const response = await fetch("/nginx-health");
+                          const text = await response.text();
+                          document.getElementById("status-results").innerHTML = 
+                              `<div style="background: #d4edda; padding: 10px; border-radius: 4px;">
+                                  ✅ Health Check: ${text.trim()}
+                              </div>`;
+                      } catch (error) {
+                          document.getElementById("status-results").innerHTML = 
+                              `<div style="background: #f8d7da; padding: 10px; border-radius: 4px;">
+                                  ❌ Health Check Error: ${error.message}
+                              </div>`;
+                      }
+                  }
+              </script>
+          </body>
+          </html>' > /build/index.html
+          echo "Frontend build complete!"
+        volumeMounts:
+        - name: frontend-assets
+          mountPath: /build
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          runAsGroup: 1000
+      volumes:
+      - name: nginx-config
+        configMap:
+          name: nginx-config
+          defaultMode: 0644
+      - name: frontend-assets
+        emptyDir: {}
+      - name: nginx-cache
+        emptyDir: {}
+      - name: nginx-run
+        emptyDir: {}
+      restartPolicy: Always
+      securityContext:
+        fsGroup: 101
+      nodeSelector:
+        kubernetes.io/os: linux
+      tolerations:
+      - key: "kubernetes.io/arch"
+        operator: "Equal"
+        value: "amd64"
+        effect: "NoSchedule"

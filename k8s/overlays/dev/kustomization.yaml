@@ -1,0 +1,85 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: webapp-dev-overlay
+
+# Base configuration
+resources:
+  - ../../base
+  - namespace.yaml
+
+# Development-specific labels
+labels:
+- pairs:
+    environment: development
+    tier: development
+
+# Development-specific annotations
+commonAnnotations:
+  environment: development
+  deployment.kubernetes.io/revision: "1"
+
+# Development namespace
+namespace: webapp-dev
+
+# Development image tags (use latest or dev tags)
+images:
+  - name: webapp-frontend
+    newTag: dev-latest
+  - name: webapp-api
+    newTag: dev-latest
+  - name: webapp-websocket
+    newTag: dev-latest
+  - name: webapp-auth
+    newTag: dev-latest
+
+# Development-specific configuration
+configMapGenerator:
+  - name: webapp-env-config
+    behavior: replace
+    literals:
+      - ENV=development
+      - LOG_LEVEL=debug
+      - DEBUG=true
+      - CORS_ORIGIN=http://localhost:3000,https://dev.webapp.example.com
+      - SESSION_TIMEOUT=900  # 15 minutes
+      - FILE_UPLOAD_MAX_SIZE=10mb
+      - RATE_LIMIT_WINDOW=60
+      - RATE_LIMIT_MAX=100
+      - CACHE_TTL=30
+      - DB_POOL_SIZE=5
+      - DB_TIMEOUT=10000
+      - ENABLE_METRICS=false
+      - ENABLE_TRACING=false
+      - HEALTH_CHECK_INTERVAL=60
+      - HOT_RELOAD=true
+      - MOCK_EXTERNAL_APIS=true
+
+# Development replica counts (minimal for resource efficiency)
+replicas:
+  - name: webapp-frontend
+    count: 1
+  - name: webapp-api
+    count: 1
+  - name: webapp-websocket
+    count: 1
+  - name: webapp-auth-deployment
+    count: 1
+  - name: prometheus-deployment
+    count: 1
+  - name: grafana-deployment
+    count: 1
+
+# Development resource limits (minimal)
+# patchesStrategicMerge:
+#   - dev-resources.yaml
+  
+# Development-specific patches
+# patchesJson6902:
+#   - target:
+#       group: apps
+#       version: v1
+#       kind: Deployment
+#       name: webapp-frontend-deployment
+#     path: dev-frontend-patch.yaml

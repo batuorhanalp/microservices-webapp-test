@@ -1,0 +1,208 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webapp-ingress
+  labels:
+    app: webapp-production
+    component: ingress
+  annotations:
+    # General ingress annotations
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    
+    # SSL/TLS configuration
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    
+    # Performance and caching
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "300"
+    
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      add_header X-Frame-Options DENY;
+      add_header X-Content-Type-Options nosniff;
+      add_header X-XSS-Protection "1; mode=block";
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains";
+      add_header Referrer-Policy "strict-origin-when-cross-origin";
+    
+    # Rate limiting
+    nginx.ingress.kubernetes.io/rate-limit-enabled: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    
+    # WebSocket support
+    nginx.ingress.kubernetes.io/websocket-services: "webapp-websocket-service"
+    
+    # Cloud-specific annotations
+    # AWS ALB
+    kubernetes.io/ingress.class: "alb"
+    alb.ingress.kubernetes.io/scheme: "internet-facing"
+    alb.ingress.kubernetes.io/target-type: "ip"
+    alb.ingress.kubernetes.io/load-balancer-name: "webapp-production-alb"
+    alb.ingress.kubernetes.io/certificate-arn: ""  # Set via environment overlay
+    
+    # Azure Application Gateway
+    kubernetes.io/ingress.class: "azure/application-gateway"
+    appgw.ingress.kubernetes.io/ssl-redirect: "true"
+    appgw.ingress.kubernetes.io/backend-path-prefix: "/"
+    
+    # GCP Cloud Load Balancer
+    kubernetes.io/ingress.class: "gce"
+    ingress.gcp.kubernetes.io/managed-certificates: "webapp-ssl-cert"
+    cloud.google.com/neg: '{"ingress": true}'
+
+spec:
+  tls:
+  - hosts:
+    - webapp.example.com
+    - api.webapp.example.com
+    - ws.webapp.example.com
+    secretName: webapp-tls-secret
+  
+  rules:
+  # Main application (frontend)
+  - host: webapp.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: webapp-frontend-service
+            port:
+              number: 80
+      
+      # API routes
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: webapp-api-service
+            port:
+              number: 8080
+      
+      # WebSocket routes
+      - path: /ws
+        pathType: Prefix
+        backend:
+          service:
+            name: webapp-websocket-service
+            port:
+              number: 3002
+      
+      # Health checks
+      - path: /health
+        pathType: Exact
+        backend:
+          service:
+            name: webapp-api-service
+            port:
+              number: 8080
+      
+      # Metrics endpoint
+      - path: /metrics
+        pathType: Exact
+        backend:
+          service:
+            name: webapp-frontend-service
+            port:
+              number: 9090
+
+  # API subdomain (optional)
+  - host: api.webapp.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: webapp-api-service
+            port:
+              number: 8080
+
+  # WebSocket subdomain (optional)
+  - host: ws.webapp.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: webapp-websocket-service
+            port:
+              number: 3002
+
+---
+# SSL Certificate for Let's Encrypt (cert-manager)
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: webapp-tls-cert
+  labels:
+    app: webapp-production
+    component: ingress
+spec:
+  secretName: webapp-tls-secret
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: webapp.example.com
+  dnsNames:
+  - webapp.example.com
+  - api.webapp.example.com
+  - ws.webapp.example.com
+
+---
+# GCP Managed Certificate (for GKE)
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: webapp-ssl-cert
+  labels:
+    app: webapp-production
+    component: ingress
+spec:
+  domains:
+  - webapp.example.com
+  - api.webapp.example.com
+  - ws.webapp.example.com
+
+---
+# NGINX Ingress Controller Service (LoadBalancer)
+apiVersion: v1
+kind: Service
+metadata:
+  name: webapp-ingress-service
+  labels:
+    app: webapp-production
+    component: ingress
+  annotations:
+    # AWS NLB
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    
+    # Azure Load Balancer
+    service.beta.kubernetes.io/azure-load-balancer-resource-group: "webapp-prod-dev-rg"
+    service.beta.kubernetes.io/azure-load-balancer-mode: "shared"
+    
+    # GCP Load Balancer
+    cloud.google.com/load-balancer-type: "External"
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  - port: 443
+    targetPort: 443
+    protocol: TCP
+    name: https
+  selector:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/component: controller

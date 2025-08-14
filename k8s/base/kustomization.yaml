@@ -1,0 +1,69 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: webapp-production-base
+
+# Base resources
+resources:
+  - configmap.yaml
+  - secrets.yaml
+  - secret-stores.yaml
+  - ../components
+
+# Common labels applied to all resources
+labels:
+- pairs:
+    app: webapp-production
+    version: v1.0.0
+
+# Common annotations applied to all resources
+commonAnnotations:
+  managed-by: kustomize
+  documentation: "https://github.com/your-org/webapp-production"
+
+# Namespace to deploy all resources into
+namespace: webapp-production
+
+# Images to be used (can be overridden in overlays)
+images:
+  - name: webapp-frontend
+    newTag: latest
+  - name: webapp-api
+    newTag: latest  
+  - name: webapp-websocket
+    newTag: latest
+  - name: webapp-auth
+    newTag: latest
+
+# ConfigMap generator for environment-specific configuration
+configMapGenerator:
+  - name: webapp-env-config
+    literals:
+      - ENV=production
+      - LOG_LEVEL=info
+      - DEBUG=false
+      - CORS_ORIGIN=https://webapp.example.com
+      - SESSION_TIMEOUT=1800
+      - FILE_UPLOAD_MAX_SIZE=50mb
+      - RATE_LIMIT_WINDOW=60
+      - RATE_LIMIT_MAX=100
+
+# Secret management via External Secrets Operator
+# All secrets are now managed by cloud secret managers
+# Static passwords have been removed for security
+
+# Resource transformers
+replicas:
+  - name: webapp-frontend
+    count: 3
+  - name: webapp-api
+    count: 3  
+  - name: webapp-websocket
+    count: 3
+  - name: webapp-auth-deployment
+    count: 3
+  - name: prometheus-deployment
+    count: 1
+  - name: grafana-deployment
+    count: 1
