@@ -276,6 +276,122 @@ public class UserRepositoryTests : IDisposable
         result.Should().BeFalse();
     }
 
+    [Fact]
+    public async Task GetByEmailAsync_WithNullOrWhitespaceEmail_ShouldReturnNull()
+    {
+        // Act & Assert - Test null
+        var resultNull = await _userRepository.GetByEmailAsync(null!);
+        resultNull.Should().BeNull();
+
+        // Act & Assert - Test empty string
+        var resultEmpty = await _userRepository.GetByEmailAsync("");
+        resultEmpty.Should().BeNull();
+
+        // Act & Assert - Test whitespace
+        var resultWhitespace = await _userRepository.GetByEmailAsync("   ");
+        resultWhitespace.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetByUsernameAsync_WithNullOrWhitespaceUsername_ShouldReturnNull()
+    {
+        // Act & Assert - Test null
+        var resultNull = await _userRepository.GetByUsernameAsync(null!);
+        resultNull.Should().BeNull();
+
+        // Act & Assert - Test empty string
+        var resultEmpty = await _userRepository.GetByUsernameAsync("");
+        resultEmpty.Should().BeNull();
+
+        // Act & Assert - Test whitespace
+        var resultWhitespace = await _userRepository.GetByUsernameAsync("   ");
+        resultWhitespace.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task SearchByUsernameAsync_WithNullOrWhitespaceSearchTerm_ShouldReturnEmpty()
+    {
+        // Act & Assert - Test null
+        var resultNull = await _userRepository.SearchByUsernameAsync(null!);
+        resultNull.Should().BeEmpty();
+
+        // Act & Assert - Test empty string
+        var resultEmpty = await _userRepository.SearchByUsernameAsync("");
+        resultEmpty.Should().BeEmpty();
+
+        // Act & Assert - Test whitespace
+        var resultWhitespace = await _userRepository.SearchByUsernameAsync("   ");
+        resultWhitespace.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task IsEmailTakenAsync_WithNullOrWhitespaceEmail_ShouldReturnFalse()
+    {
+        // Act & Assert - Test null
+        var resultNull = await _userRepository.IsEmailTakenAsync(null!);
+        resultNull.Should().BeFalse();
+
+        // Act & Assert - Test empty string
+        var resultEmpty = await _userRepository.IsEmailTakenAsync("");
+        resultEmpty.Should().BeFalse();
+
+        // Act & Assert - Test whitespace
+        var resultWhitespace = await _userRepository.IsEmailTakenAsync("   ");
+        resultWhitespace.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task IsUsernameTakenAsync_WithNullOrWhitespaceUsername_ShouldReturnFalse()
+    {
+        // Act & Assert - Test null
+        var resultNull = await _userRepository.IsUsernameTakenAsync(null!);
+        resultNull.Should().BeFalse();
+
+        // Act & Assert - Test empty string
+        var resultEmpty = await _userRepository.IsUsernameTakenAsync("");
+        resultEmpty.Should().BeFalse();
+
+        // Act & Assert - Test whitespace
+        var resultWhitespace = await _userRepository.IsUsernameTakenAsync("   ");
+        resultWhitespace.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task AddAsync_WithNullUser_ShouldThrowArgumentNullException()
+    {
+        // Act & Assert
+        var act = async () => await _userRepository.AddAsync(null!);
+        await act.Should().ThrowAsync<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void Update_WithNullUser_ShouldThrowArgumentNullException()
+    {
+        // Act & Assert
+        var act = () => _userRepository.Update(null!);
+        act.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public async Task DeleteAsync_WithNonExistentId_ShouldNotThrow()
+    {
+        // Arrange
+        var nonExistentId = Guid.NewGuid();
+
+        // Act & Assert - Should not throw
+        var act = async () => await _userRepository.DeleteAsync(nonExistentId);
+        await act.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task Constructor_WithNullContext_ShouldThrowArgumentNullException()
+    {
+        // Act & Assert
+        var act = () => new UserRepository(null!);
+        act.Should().Throw<ArgumentNullException>()
+            .WithMessage("*context*");
+    }
+
     public void Dispose()
     {
         _context.Dispose();

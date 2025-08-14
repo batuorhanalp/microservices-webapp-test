@@ -75,6 +75,17 @@ public class PostRepository : IPostRepository
             .FirstOrDefaultAsync(p => p.Id == postId);
     }
 
+    public async Task<IEnumerable<Post>> GetPostsWithMediaAsync(int limit = 20, int offset = 0)
+    {
+        return await _context.Posts
+            .Include(p => p.MediaAttachments)
+            .Where(p => p.MediaAttachments.Any())
+            .OrderByDescending(p => p.CreatedAt)
+            .Skip(offset)
+            .Take(limit)
+            .ToListAsync();
+    }
+
     public async Task<IEnumerable<Post>> SearchAsync(string searchTerm, int limit = 20, int offset = 0)
     {
         if (string.IsNullOrWhiteSpace(searchTerm))
