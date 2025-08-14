@@ -86,7 +86,7 @@ public class UserServiceTests
         var exception = await Assert.ThrowsAsync<ArgumentException>(
             () => _userService.CreateUserAsync(email, username, displayName));
         
-        exception.Message.Should().Contain("Email is already taken");
+        exception.Message.Should().Contain("Email address is already in use");
         _mockUserRepository.Verify(r => r.AddAsync(It.IsAny<User>()), Times.Never);
     }
 
@@ -107,7 +107,7 @@ public class UserServiceTests
         var exception = await Assert.ThrowsAsync<ArgumentException>(
             () => _userService.CreateUserAsync(email, username, displayName));
         
-        exception.Message.Should().Contain("Username is already taken");
+        exception.Message.Should().Contain("Username is already in use");
         _mockUserRepository.Verify(r => r.AddAsync(It.IsAny<User>()), Times.Never);
     }
 
@@ -242,7 +242,7 @@ public class UserServiceTests
         var exception = await Assert.ThrowsAsync<ArgumentException>(
             () => _userService.FollowUserAsync(followerId, followeeId));
         
-        exception.Message.Should().Contain("Follower not found");
+        exception.Message.Should().Contain("Follower user not found");
     }
 
     [Fact]
@@ -262,7 +262,7 @@ public class UserServiceTests
         var exception = await Assert.ThrowsAsync<ArgumentException>(
             () => _userService.FollowUserAsync(followerId, followeeId));
         
-        exception.Message.Should().Contain("User to follow not found");
+        exception.Message.Should().Contain("Followee user not found");
     }
 
     [Fact]
@@ -272,12 +272,13 @@ public class UserServiceTests
         var followerId = Guid.NewGuid();
         var followeeId = Guid.NewGuid();
         var follower = new User("follower@example.com", "follower", "Follower", "hashedpassword");
-        var followee = new User("followee@example.com", "followee", "Followee", "hashedpassword");
+        
+        // Add a follow relationship to the follower
+        var follow = new Follow(followerId, followeeId, false);
+        follower.Following.Add(follow);
         
         _mockUserRepository.Setup(r => r.GetByIdAsync(followerId))
             .ReturnsAsync(follower);
-        _mockUserRepository.Setup(r => r.GetByIdAsync(followeeId))
-            .ReturnsAsync(followee);
         _mockUserRepository.Setup(r => r.SaveChangesAsync())
             .ReturnsAsync(1);
 
@@ -286,8 +287,11 @@ public class UserServiceTests
 
         // Assert
         _mockUserRepository.Verify(r => r.GetByIdAsync(followerId), Times.Once);
-        _mockUserRepository.Verify(r => r.GetByIdAsync(followeeId), Times.Once);
+        _mockUserRepository.Verify(r => r.Update(follower), Times.Once);
         _mockUserRepository.Verify(r => r.SaveChangesAsync(), Times.Once);
+        
+        // Verify the follow was removed
+        follower.Following.Should().NotContain(f => f.FolloweeId == followeeId);
     }
 
     [Fact]
