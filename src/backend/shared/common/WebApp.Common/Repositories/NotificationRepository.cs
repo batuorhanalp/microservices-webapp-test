@@ -12,7 +12,7 @@ public class NotificationRepository : INotificationRepository
 
     public NotificationRepository(ApplicationDbContext context)
     {
-        _context = context;
+        _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
     public async Task<Notification?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
@@ -164,6 +164,7 @@ public class NotificationRepository : INotificationRepository
         CancellationToken cancellationToken = default)
     {
         var query = _context.Notifications
+            .AsTracking()
             .Where(n => n.UserId == userId && n.Status == NotificationStatus.Unread);
 
         if (type.HasValue)
@@ -194,6 +195,7 @@ public class NotificationRepository : INotificationRepository
         CancellationToken cancellationToken = default)
     {
         var query = _context.Notifications
+            .AsTracking()
             .Where(n => n.UserId == userId && n.Status != NotificationStatus.Archived);
 
         if (type.HasValue)
@@ -219,26 +221,72 @@ public class NotificationRepository : INotificationRepository
 
     public async Task<int> DeleteExpiredNotificationsAsync(CancellationToken cancellationToken = default)
     {
-        var expiredNotifications = await _context.Notifications
+        // Get expired notification IDs to avoid tracking conflicts
+        var expiredIds = await _context.Notifications
+            .AsNoTracking()
             .Where(n => n.ExpiresAt != null && n.ExpiresAt <= DateTime.UtcNow)
+            .Select(n => n.Id)
             .ToListAsync(cancellationToken);
 
-        _context.Notifications.RemoveRange(expiredNotifications);
-        await _context.SaveChangesAsync(cancellationToken);
-        return expiredNotifications.Count;
+        if (expiredIds.Any())
+        {
+            // Clear change tracker to avoid conflicts
+            _context.ChangeTracker.Clear();
+            
+            // Process deletions in batches to avoid memory issues
+            const int batchSize = 100;
+            for (int i = 0; i < expiredIds.Count; i += batchSize)
+            {
+                var batch = expiredIds.Skip(i).Take(batchSize).ToList();
+                var notificationsToDelete = await _context.Notifications
+                    .Where(n => batch.Contains(n.Id))
+                    .ToListAsync(cancellationToken);
+                
+                _context.Notifications.RemoveRange(notificationsToDelete);
+                await _context.SaveChangesAsync(cancellationToken);
+                
+                // Clear change tracker after each batch
+                _context.ChangeTracker.Clear();
+            }
+        }
+        
+        return expiredIds.Count;
     }
 
     public async Task<int> DeleteArchivedNotificationsAsync(
         DateTime olderThan, 
         CancellationToken cancellationToken = default)
     {
-        var archivedNotifications = await _context.Notifications
+        // Get archived notification IDs to avoid tracking conflicts  
+        var archivedIds = await _context.Notifications
+            .AsNoTracking()
             .Where(n => n.Status == NotificationStatus.Archived && n.ArchivedAt <= olderThan)
+            .Select(n => n.Id)
             .ToListAsync(cancellationToken);
 
-        _context.Notifications.RemoveRange(archivedNotifications);
-        await _context.SaveChangesAsync(cancellationToken);
-        return archivedNotifications.Count;
+        if (archivedIds.Any())
+        {
+            // Clear change tracker to avoid conflicts
+            _context.ChangeTracker.Clear();
+            
+            // Process deletions in batches to avoid memory issues
+            const int batchSize = 100;
+            for (int i = 0; i < archivedIds.Count; i += batchSize)
+            {
+                var batch = archivedIds.Skip(i).Take(batchSize).ToList();
+                var notificationsToDelete = await _context.Notifications
+                    .Where(n => batch.Contains(n.Id))
+                    .ToListAsync(cancellationToken);
+                
+                _context.Notifications.RemoveRange(notificationsToDelete);
+                await _context.SaveChangesAsync(cancellationToken);
+                
+                // Clear change tracker after each batch
+                _context.ChangeTracker.Clear();
+            }
+        }
+        
+        return archivedIds.Count;
     }
 
     public async Task<IEnumerable<Notification>> GetUnreadNotificationsAsync(

@@ -550,7 +550,7 @@ public class NotificationRepositoryTests : IDisposable
         result.Should().Be(2); // Both archived notifications should be deleted
         
         var remainingNotifications = await _context.Notifications.Where(n => n.UserId == user.Id).ToListAsync();
-        remainingNotifications.Should().HaveCount(2);
+        remainingNotifications.Should().HaveCount(1); // Only the unarchived notification remains
     }
 
     [Fact]

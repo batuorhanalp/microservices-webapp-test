@@ -30,7 +30,7 @@ public class Notification
     public NotificationType Type { get; private set; }
     
     [Required]
-    public NotificationStatus Status { get; private set; } = NotificationStatus.Unread;
+    public NotificationStatus Status { get; protected set; } = NotificationStatus.Unread;
     
     [Required]
     public string Title { get; private set; } = string.Empty;
@@ -46,15 +46,15 @@ public class Notification
     // Optional: User who triggered this notification (e.g., who liked your post)
     public Guid? TriggerUserId { get; private set; }
     
-    public string ActionUrl { get; private set; } = string.Empty;
+    public string ActionUrl { get; protected set; } = string.Empty;
     
     public Dictionary<string, object> Metadata { get; private set; } = new();
     
     public DateTime CreatedAt { get; private set; }
     
-    public DateTime? ReadAt { get; private set; }
+    public DateTime? ReadAt { get; protected set; }
     
-    public DateTime? ArchivedAt { get; private set; }
+    public DateTime? ArchivedAt { get; protected set; }
     
     public DateTime? ExpiresAt { get; private set; }
     

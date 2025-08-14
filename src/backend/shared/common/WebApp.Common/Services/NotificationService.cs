@@ -16,9 +16,9 @@ public class NotificationService : INotificationService
         IUserRepository userRepository,
         ILogger<NotificationService> logger)
     {
-        _notificationRepository = notificationRepository;
-        _userRepository = userRepository;
-        _logger = logger;
+        _notificationRepository = notificationRepository ?? throw new ArgumentNullException(nameof(notificationRepository));
+        _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task<NotificationDto?> GetNotificationAsync(Guid id, CancellationToken cancellationToken = default)
