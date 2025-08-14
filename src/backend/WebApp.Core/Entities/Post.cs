@@ -42,22 +42,20 @@ public class Post
     public Guid? RootPostId { get; private set; } // For threading
     
     // Media handling
-    public virtual ICollection<MediaAttachment> MediaAttachments { get; private set; } = new List<MediaAttachment>();
+    public ICollection<MediaAttachment> MediaAttachments { get; private set; } = new List<MediaAttachment>();
     
-    // Navigation properties
-    public virtual User Author { get; private set; } = null!;
+    // Navigation properties - Essential relationships only, load others explicitly for performance
+    public User Author { get; private set; } = null!;
     
-    public virtual Post? ParentPost { get; private set; }
+    public Post? ParentPost { get; private set; }
     
-    public virtual Post? RootPost { get; private set; }
+    public Post? RootPost { get; private set; }
     
-    public virtual ICollection<Post> Replies { get; private set; } = new List<Post>();
-    
-    public virtual ICollection<Like> Likes { get; private set; } = new List<Like>();
-    
-    public virtual ICollection<Comment> Comments { get; private set; } = new List<Comment>();
-    
-    public virtual ICollection<Share> Shares { get; private set; } = new List<Share>();
+    // Performance: Load these collections only when needed via explicit queries
+    // public ICollection<Post> Replies { get; private set; } = new List<Post>();
+    // public ICollection<Like> Likes { get; private set; } = new List<Like>();
+    // public ICollection<Comment> Comments { get; private set; } = new List<Comment>();
+    // public ICollection<Share> Shares { get; private set; } = new List<Share>();
 
     // Constructors
     private Post() { } // For EF Core
@@ -131,13 +129,8 @@ public class Post
     
     public bool IsReply => ParentPostId.HasValue;
     
-    public int GetLikeCount() => Likes.Count;
-    
-    public int GetCommentCount() => Comments.Count;
-    
-    public int GetShareCount() => Shares.Count;
-    
-    public int GetReplyCount() => Replies.Count;
+    // Note: Engagement counts should be calculated via repository queries for performance
+    // These methods are kept for backward compatibility but should use database queries
 
     private void UpdatePostType()
     {

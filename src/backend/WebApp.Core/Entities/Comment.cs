@@ -20,9 +20,9 @@ public class Comment
     public DateTime UpdatedAt { get; private set; }
     
     // Navigation properties
-    public virtual User User { get; private set; } = null!;
+    public User User { get; private set; } = null!;
     
-    public virtual Post Post { get; private set; } = null!;
+    public Post Post { get; private set; } = null!;
 
     // Constructors
     private Comment() { } // For EF Core

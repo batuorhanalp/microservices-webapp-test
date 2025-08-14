@@ -32,7 +32,7 @@ public class MediaAttachment
     public DateTime CreatedAt { get; private set; }
 
     // Navigation properties
-    public virtual Post Post { get; private set; } = null!;
+    public Post Post { get; private set; } = null!;
 
     // Constructors
     private MediaAttachment() { } // For EF Core

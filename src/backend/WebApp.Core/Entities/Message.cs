@@ -42,9 +42,9 @@ public class Message
     public DateTime? ReadAt { get; private set; }
 
     // Navigation properties
-    public virtual User Sender { get; private set; } = null!;
+    public User Sender { get; private set; } = null!;
     
-    public virtual User Recipient { get; private set; } = null!;
+    public User Recipient { get; private set; } = null!;
 
     // Constructors
     private Message() { } // For EF Core

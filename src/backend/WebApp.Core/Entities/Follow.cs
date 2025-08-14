@@ -15,9 +15,9 @@ public class Follow
     public DateTime? AcceptedAt { get; private set; }
 
     // Navigation properties
-    public virtual User Follower { get; private set; } = null!;
+    public User Follower { get; private set; } = null!;
     
-    public virtual User Followee { get; private set; } = null!;
+    public User Followee { get; private set; } = null!;
 
     // Constructors
     private Follow() { } // For EF Core

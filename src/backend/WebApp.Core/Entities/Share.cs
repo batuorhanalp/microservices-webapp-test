@@ -13,9 +13,9 @@ public class Share
     public DateTime CreatedAt { get; private set; }
 
     // Navigation properties
-    public virtual User User { get; private set; } = null!;
+    public User User { get; private set; } = null!;
     
-    public virtual Post Post { get; private set; } = null!;
+    public Post Post { get; private set; } = null!;
 
     // Constructors
     private Share() { } // For EF Core

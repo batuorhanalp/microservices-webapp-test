@@ -36,20 +36,18 @@ public class User
     
     public DateTime UpdatedAt { get; private set; }
     
-    // Navigation properties
-    public virtual ICollection<Post> Posts { get; private set; } = new List<Post>();
+    // Navigation properties - Removed virtual for performance, use explicit loading when needed
+    public ICollection<Post> Posts { get; private set; } = new List<Post>();
     
-    public virtual ICollection<Follow> Followers { get; private set; } = new List<Follow>();
+    public ICollection<Follow> Followers { get; private set; } = new List<Follow>();
     
-    public virtual ICollection<Follow> Following { get; private set; } = new List<Follow>();
+    public ICollection<Follow> Following { get; private set; } = new List<Follow>();
     
-    public virtual ICollection<Like> Likes { get; private set; } = new List<Like>();
-    
-    public virtual ICollection<Comment> Comments { get; private set; } = new List<Comment>();
-    
-    public virtual ICollection<Message> SentMessages { get; private set; } = new List<Message>();
-    
-    public virtual ICollection<Message> ReceivedMessages { get; private set; } = new List<Message>();
+    // Performance: Don't load these collections by default - use explicit queries
+    // public ICollection<Like> Likes { get; private set; } = new List<Like>();
+    // public ICollection<Comment> Comments { get; private set; } = new List<Comment>();
+    // public ICollection<Message> SentMessages { get; private set; } = new List<Message>();
+    // public ICollection<Message> ReceivedMessages { get; private set; } = new List<Message>();
 
     // Constructors
     private User() { } // For EF Core

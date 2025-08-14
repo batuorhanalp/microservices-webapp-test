@@ -7,6 +7,8 @@ public class ApplicationDbContext : DbContext
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
     {
+        // Performance optimization: Disable change tracking for read-only scenarios
+        ChangeTracker.QueryTrackingBehavior = QueryTrackingBehavior.NoTracking;
     }
 
     // DbSets
@@ -55,7 +57,7 @@ public class ApplicationDbContext : DbContext
                   
             // Self-referencing for replies
             entity.HasOne(p => p.ParentPost)
-                  .WithMany(p => p.Replies)
+                  .WithMany()
                   .HasForeignKey(p => p.ParentPostId)
                   .OnDelete(DeleteBehavior.Restrict);
                   
@@ -116,12 +118,12 @@ public class ApplicationDbContext : DbContext
             
             // Relationships
             entity.HasOne(l => l.User)
-                  .WithMany(u => u.Likes)
+                  .WithMany()
                   .HasForeignKey(l => l.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
                   
             entity.HasOne(l => l.Post)
-                  .WithMany(p => p.Likes)
+                  .WithMany()
                   .HasForeignKey(l => l.PostId)
                   .OnDelete(DeleteBehavior.Cascade);
             
@@ -137,12 +139,12 @@ public class ApplicationDbContext : DbContext
             
             // Relationships
             entity.HasOne(c => c.User)
-                  .WithMany(u => u.Comments)
+                  .WithMany()
                   .HasForeignKey(c => c.UserId)
                   .OnDelete(DeleteBehavior.Cascade);
                   
             entity.HasOne(c => c.Post)
-                  .WithMany(p => p.Comments)
+                  .WithMany()
                   .HasForeignKey(c => c.PostId)
                   .OnDelete(DeleteBehavior.Cascade);
                   
@@ -162,7 +164,7 @@ public class ApplicationDbContext : DbContext
                   .OnDelete(DeleteBehavior.Cascade);
                   
             entity.HasOne(s => s.Post)
-                  .WithMany(p => p.Shares)
+                  .WithMany()
                   .HasForeignKey(s => s.PostId)
                   .OnDelete(DeleteBehavior.Cascade);
             
@@ -181,12 +183,12 @@ public class ApplicationDbContext : DbContext
             
             // Relationships
             entity.HasOne(m => m.Sender)
-                  .WithMany(u => u.SentMessages)
+                  .WithMany()
                   .HasForeignKey(m => m.SenderId)
                   .OnDelete(DeleteBehavior.Restrict);
                   
             entity.HasOne(m => m.Recipient)
-                  .WithMany(u => u.ReceivedMessages)
+                  .WithMany()
                   .HasForeignKey(m => m.RecipientId)
                   .OnDelete(DeleteBehavior.Restrict);
                   
