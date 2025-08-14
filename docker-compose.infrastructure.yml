@@ -1,0 +1,125 @@
+version: '3.8'
+
+services:
+  # Infrastructure Services Only - for running services locally in IDE
+  postgres:
+    image: postgres:15-alpine
+    container_name: webapp-postgres-dev
+    environment:
+      POSTGRES_DB: webapp_dev
+      POSTGRES_USER: webapp_user
+      POSTGRES_PASSWORD: webapp_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
+    networks:
+      - webapp-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U webapp_user -d webapp_dev"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: webapp-redis-dev
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - webapp-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: webapp-rabbitmq-dev
+    environment:
+      RABBITMQ_DEFAULT_USER: webapp
+      RABBITMQ_DEFAULT_PASS: webapp_dev_password
+    ports:
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - webapp-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Observability Stack
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: webapp-jaeger-dev
+    ports:
+      - "16686:16686" # Jaeger UI
+      - "14250:14250" # gRPC
+    environment:
+      COLLECTOR_OTLP_ENABLED: true
+    networks:
+      - webapp-network
+
+  seq:
+    image: datalust/seq:latest
+    container_name: webapp-seq-dev
+    environment:
+      ACCEPT_EULA: Y
+    ports:
+      - "5341:5341" # Seq UI
+      - "5340:80"   # Seq ingestion
+    volumes:
+      - seq_data:/data
+    networks:
+      - webapp-network
+
+  # MinIO for local object storage (S3-compatible)
+  minio:
+    image: minio/minio:latest
+    container_name: webapp-minio-dev
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin123
+    ports:
+      - "9000:9000"   # API
+      - "9001:9001"   # Console
+    volumes:
+      - minio_data:/data
+    networks:
+      - webapp-network
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # Adminer - Database Management UI
+  adminer:
+    image: adminer:latest
+    container_name: webapp-adminer-dev
+    ports:
+      - "8080:8080"
+    networks:
+      - webapp-network
+    depends_on:
+      - postgres
+
+networks:
+  webapp-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:
+  seq_data:
+  minio_data:

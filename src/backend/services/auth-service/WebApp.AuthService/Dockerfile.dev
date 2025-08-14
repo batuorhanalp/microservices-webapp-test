@@ -1,0 +1,47 @@
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+EXPOSE 8080
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy solution file
+COPY src/backend/WebApp.sln .
+
+# Copy project files
+COPY src/backend/shared/common/WebApp.Common/WebApp.Common.csproj shared/common/WebApp.Common/
+COPY src/backend/services/auth-service/WebApp.AuthService/WebApp.AuthService.csproj services/auth-service/WebApp.AuthService/
+
+# Restore dependencies
+RUN dotnet restore services/auth-service/WebApp.AuthService/WebApp.AuthService.csproj
+
+# Copy all source files
+COPY src/backend/shared/common/WebApp.Common/ shared/common/WebApp.Common/
+COPY src/backend/services/auth-service/WebApp.AuthService/ services/auth-service/WebApp.AuthService/
+
+# Build the project
+WORKDIR /src/services/auth-service/WebApp.AuthService
+RUN dotnet build WebApp.AuthService.csproj -c Debug -o /app/build
+
+FROM build AS publish
+RUN dotnet publish WebApp.AuthService.csproj -c Debug -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+
+# Install debugging tools
+USER root
+RUN apt-get update && apt-get install -y \
+    curl \
+    procps \
+    && rm -rf /var/lib/apt/lists/*
+USER app
+
+COPY --from=publish /app/publish .
+
+# Environment for debugging
+ENV ASPNETCORE_ENVIRONMENT=Development
+ENV DOTNET_USE_POLLING_FILE_WATCHER=true
+ENV ASPNETCORE_URLS=http://+:8080
+
+ENTRYPOINT ["dotnet", "WebApp.AuthService.dll"]

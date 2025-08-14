@@ -1,0 +1,47 @@
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+WORKDIR /app
+EXPOSE 8080
+
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copy solution file
+COPY src/backend/WebApp.sln .
+
+# Copy project files
+COPY src/backend/shared/common/WebApp.Common/WebApp.Common.csproj shared/common/WebApp.Common/
+COPY src/backend/services/media-processing-service/WebApp.MediaProcessingService/WebApp.MediaProcessingService.csproj services/media-processing-service/WebApp.MediaProcessingService/
+
+# Restore dependencies
+RUN dotnet restore services/media-processing-service/WebApp.MediaProcessingService/WebApp.MediaProcessingService.csproj
+
+# Copy all source files
+COPY src/backend/shared/common/WebApp.Common/ shared/common/WebApp.Common/
+COPY src/backend/services/media-processing-service/WebApp.MediaProcessingService/ services/media-processing-service/WebApp.MediaProcessingService/
+
+# Build the project
+WORKDIR /src/services/media-processing-service/WebApp.MediaProcessingService
+RUN dotnet build WebApp.MediaProcessingService.csproj -c Debug -o /app/build
+
+FROM build AS publish
+RUN dotnet publish WebApp.MediaProcessingService.csproj -c Debug -o /app/publish
+
+FROM base AS final
+WORKDIR /app
+
+# Install debugging tools
+USER root
+RUN apt-get update && apt-get install -y \
+    curl \
+    procps \
+    && rm -rf /var/lib/apt/lists/*
+USER app
+
+COPY --from=publish /app/publish .
+
+# Environment for debugging
+ENV ASPNETCORE_ENVIRONMENT=Development
+ENV DOTNET_USE_POLLING_FILE_WATCHER=true
+ENV ASPNETCORE_URLS=http://+:8080
+
+ENTRYPOINT ["dotnet", "WebApp.MediaProcessingService.dll"]
