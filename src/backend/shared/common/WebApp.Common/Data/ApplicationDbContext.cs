@@ -20,6 +20,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<Comment> Comments { get; set; }
     public DbSet<Share> Shares { get; set; }
     public DbSet<Message> Messages { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -197,6 +198,44 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => e.RecipientId);
             entity.HasIndex(e => e.CreatedAt);
             entity.HasIndex(e => new { e.SenderId, e.RecipientId, e.CreatedAt });
+        });
+
+        // Notification Configuration
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Message).IsRequired().HasMaxLength(1000);
+            entity.Property(e => e.EntityType).HasMaxLength(50);
+            entity.Property(e => e.ActionUrl).HasMaxLength(500);
+            entity.Property(e => e.Type).HasConversion<int>();
+            entity.Property(e => e.Status).HasConversion<int>();
+            
+            // JSON conversion for metadata
+            entity.Property(e => e.Metadata)
+                  .HasConversion(
+                      v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions?)null),
+                      v => System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(v, (System.Text.Json.JsonSerializerOptions?)null) ?? new Dictionary<string, object>());
+            
+            // Relationships
+            entity.HasOne(n => n.User)
+                  .WithMany()
+                  .HasForeignKey(n => n.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+                  
+            entity.HasOne(n => n.TriggerUser)
+                  .WithMany()
+                  .HasForeignKey(n => n.TriggerUserId)
+                  .OnDelete(DeleteBehavior.SetNull);
+            
+            // Indexes for performance
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.Type);
+            entity.HasIndex(e => e.Status);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => new { e.UserId, e.Status, e.CreatedAt });
+            entity.HasIndex(e => new { e.UserId, e.Type, e.CreatedAt });
+            entity.HasIndex(e => e.ExpiresAt);
         });
     }
 }
