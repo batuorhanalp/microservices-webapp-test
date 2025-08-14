@@ -42,7 +42,7 @@ public class UserService : IUserService
             throw new ArgumentException("Username is already in use", nameof(username));
 
         // Create user
-        var user = new User(email, username, displayName);
+        var user = new User(email, username, displayName, "temporary_hash");
 
         // Save to repository
         await _userRepository.AddAsync(user);

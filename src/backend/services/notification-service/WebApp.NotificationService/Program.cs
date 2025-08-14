@@ -22,9 +22,10 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Register repositories
 builder.Services.AddScoped<INotificationRepository, NotificationRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IPostRepository, PostRepository>();
 
 // Register NotificationService implementation
-builder.Services.AddScoped<INotificationService, WebApp.Common.Services.NotificationService>();
+builder.Services.AddScoped<INotificationService, WebApp.NotificationService.Services.NotificationService>();
 
 // Health checks
 builder.Services.AddHealthChecks()
