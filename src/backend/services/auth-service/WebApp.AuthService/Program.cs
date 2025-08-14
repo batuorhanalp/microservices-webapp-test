@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using WebApp.AuthService.Configuration;
 using WebApp.AuthService.Data;
 using WebApp.AuthService.Services;
 using WebApp.Common.Interfaces;
@@ -14,16 +15,27 @@ builder.Services.AddControllers();
 
 // Database context
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-    ?? "Server=localhost;Database=webapp_auth;User Id=webapp_user;Password=webapp_password;TrustServerCertificate=true;";
+    ?? "Host=localhost;Port=5432;Database=webapp_dev;Username=webapp_user;Password=webapp_dev_password";
 
 builder.Services.AddDbContext<AuthDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseNpgsql(connectionString));
 
-// JWT Configuration
-var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = jwtSettings["SecretKey"] ?? "your-super-secret-jwt-key-here-that-is-at-least-256-bits-long";
-var issuer = jwtSettings["Issuer"] ?? "WebApp.AuthService";
-var audience = jwtSettings["Audience"] ?? "WebApp";
+// JWT Configuration - Use environment variables or defaults
+var secretKey = builder.Configuration["JWT_SECRET_KEY"] 
+    ?? Environment.GetEnvironmentVariable("JWT_SECRET_KEY") 
+    ?? "your-super-secret-key-for-development-purposes-only-do-not-use-in-production";
+var issuer = builder.Configuration["JWT_ISSUER"] 
+    ?? Environment.GetEnvironmentVariable("JWT_ISSUER") 
+    ?? "WebApp.Development";
+var audience = builder.Configuration["JWT_AUDIENCE"] 
+    ?? Environment.GetEnvironmentVariable("JWT_AUDIENCE") 
+    ?? "WebApp.Development";
+
+// Ensure secret key is long enough (minimum 256 bits / 32 bytes)
+if (secretKey.Length < 32)
+{
+    secretKey = secretKey.PadRight(32, '0');
+}
 
 var key = Encoding.ASCII.GetBytes(secretKey);
 
@@ -70,8 +82,8 @@ builder.Services.Configure<JwtSettings>(options =>
     options.SecretKey = secretKey;
     options.Issuer = issuer;
     options.Audience = audience;
-    options.AccessTokenExpirationMinutes = int.Parse(jwtSettings["AccessTokenExpirationMinutes"] ?? "15");
-    options.RefreshTokenExpirationDays = int.Parse(jwtSettings["RefreshTokenExpirationDays"] ?? "7");
+    options.AccessTokenExpirationMinutes = 15;
+    options.RefreshTokenExpirationDays = 7;
 });
 
 // Configure CORS
@@ -164,13 +176,3 @@ app.MapControllers();
 app.MapHealthChecks("/health");
 
 app.Run();
-
-// JWT Settings class
-public class JwtSettings
-{
-    public string SecretKey { get; set; } = string.Empty;
-    public string Issuer { get; set; } = string.Empty;
-    public string Audience { get; set; } = string.Empty;
-    public int AccessTokenExpirationMinutes { get; set; } = 15;
-    public int RefreshTokenExpirationDays { get; set; } = 7;
-}

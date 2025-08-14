@@ -4,20 +4,12 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using WebApp.AuthService.Configuration;
 using WebApp.Common.DTOs;
 using WebApp.Common.Entities;
 using WebApp.Common.Interfaces;
 
 namespace WebApp.AuthService.Services;
-
-public class JwtSettings
-{
-    public string SecretKey { get; set; } = string.Empty;
-    public string Issuer { get; set; } = string.Empty;
-    public string Audience { get; set; } = string.Empty;
-    public int AccessTokenExpirationMinutes { get; set; } = 15;
-    public int RefreshTokenExpirationDays { get; set; } = 7;
-}
 
 public class JwtService : IJwtService
 {
