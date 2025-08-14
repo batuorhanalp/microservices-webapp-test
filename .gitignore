@@ -768,3 +768,12 @@ backup/
 # 
 # Always review files before committing!
 # ==========================================
+
+# Build and test artifacts
+TestResults/
+*.coverage
+*.coveragexml
+
+# Build scripts logs
+build.log
+test.log

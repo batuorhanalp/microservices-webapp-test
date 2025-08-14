@@ -21,6 +21,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<Share> Shares { get; set; }
     public DbSet<Message> Messages { get; set; }
     public DbSet<Notification> Notifications { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+    public DbSet<UserSession> UserSessions { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -37,9 +40,20 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.Website).HasMaxLength(200);
             entity.Property(e => e.Location).HasMaxLength(100);
             
+            // Authentication fields
+            entity.Property(e => e.PasswordHash).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.PasswordSalt).HasMaxLength(100);
+            entity.Property(e => e.EmailConfirmationToken).HasMaxLength(500);
+            entity.Property(e => e.TwoFactorSecret).HasMaxLength(100);
+            
             // Unique constraints
             entity.HasIndex(e => e.Email).IsUnique();
             entity.HasIndex(e => e.Username).IsUnique();
+            
+            // Indexes for authentication
+            entity.HasIndex(e => e.LastLoginAt);
+            entity.HasIndex(e => e.IsEmailConfirmed);
+            entity.HasIndex(e => e.LockoutEndAt);
         });
 
         // Post Configuration
@@ -236,6 +250,75 @@ public class ApplicationDbContext : DbContext
             entity.HasIndex(e => new { e.UserId, e.Status, e.CreatedAt });
             entity.HasIndex(e => new { e.UserId, e.Type, e.CreatedAt });
             entity.HasIndex(e => e.ExpiresAt);
+        });
+
+        // RefreshToken Configuration
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Token).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.JwtId).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.IpAddress).HasMaxLength(45); // IPv6
+            entity.Property(e => e.UserAgent).HasMaxLength(500);
+            entity.Property(e => e.RevokedByIp).HasMaxLength(45);
+            entity.Property(e => e.RevokedReason).HasMaxLength(200);
+            entity.Property(e => e.ReplacedByToken).HasMaxLength(500);
+            
+            // Relationships
+            entity.HasOne(rt => rt.User)
+                  .WithMany()
+                  .HasForeignKey(rt => rt.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            
+            // Indexes
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.ExpiresAt);
+            entity.HasIndex(e => new { e.UserId, e.IsRevoked, e.IsUsed });
+        });
+
+        // PasswordResetToken Configuration
+        modelBuilder.Entity<PasswordResetToken>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Token).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.IpAddress).HasMaxLength(45);
+            
+            // Relationships
+            entity.HasOne(prt => prt.User)
+                  .WithMany()
+                  .HasForeignKey(prt => prt.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            
+            // Indexes
+            entity.HasIndex(e => e.Token).IsUnique();
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.ExpiresAt);
+            entity.HasIndex(e => new { e.UserId, e.IsUsed });
+        });
+
+        // UserSession Configuration
+        modelBuilder.Entity<UserSession>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.SessionId).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.IpAddress).HasMaxLength(45);
+            entity.Property(e => e.UserAgent).HasMaxLength(500);
+            entity.Property(e => e.DeviceInfo).HasMaxLength(200);
+            entity.Property(e => e.Location).HasMaxLength(100);
+            
+            // Relationships
+            entity.HasOne(us => us.User)
+                  .WithMany()
+                  .HasForeignKey(us => us.UserId)
+                  .OnDelete(DeleteBehavior.Cascade);
+            
+            // Indexes
+            entity.HasIndex(e => e.SessionId).IsUnique();
+            entity.HasIndex(e => e.UserId);
+            entity.HasIndex(e => e.ExpiresAt);
+            entity.HasIndex(e => new { e.UserId, e.IsActive });
+            entity.HasIndex(e => e.LastActivityAt);
         });
     }
 }
