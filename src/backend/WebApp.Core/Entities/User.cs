@@ -80,31 +80,31 @@ public class User
         Bio = bio ?? string.Empty;
         Website = website ?? string.Empty;
         Location = location ?? string.Empty;
-        UpdatedAt = DateTime.UtcNow;
+        UpdateTimestamp();
     }
     
     public void UpdateProfileImage(string profileImageUrl)
     {
         ProfileImageUrl = profileImageUrl ?? string.Empty;
-        UpdatedAt = DateTime.UtcNow;
+        UpdateTimestamp();
     }
     
     public void UpdateCoverImage(string coverImageUrl)
     {
         CoverImageUrl = coverImageUrl ?? string.Empty;
-        UpdatedAt = DateTime.UtcNow;
+        UpdateTimestamp();
     }
     
     public void SetPrivacyStatus(bool isPrivate)
     {
         IsPrivate = isPrivate;
-        UpdatedAt = DateTime.UtcNow;
+        UpdateTimestamp();
     }
     
     public void SetVerificationStatus(bool isVerified)
     {
         IsVerified = isVerified;
-        UpdatedAt = DateTime.UtcNow;
+        UpdateTimestamp();
     }
     
     public void SetBirthDate(DateTime birthDate)
@@ -113,6 +113,16 @@ public class User
             throw new ArgumentException("User must be at least 13 years old");
             
         BirthDate = birthDate;
-        UpdatedAt = DateTime.UtcNow;
+        UpdateTimestamp();
+    }
+    
+    private void UpdateTimestamp()
+    {
+        // Ensure UpdatedAt is always after the original timestamp
+        var newTimestamp = DateTime.UtcNow;
+        if (newTimestamp <= UpdatedAt)
+            newTimestamp = UpdatedAt.AddTicks(1);
+            
+        UpdatedAt = newTimestamp;
     }
 }
