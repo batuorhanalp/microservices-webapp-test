@@ -1,0 +1,6 @@
+@WebApp.MediaUploadService_HostAddress = http://localhost:5101
+
+GET {{WebApp.MediaUploadService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
