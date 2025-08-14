@@ -45,7 +45,7 @@ This project demonstrates building a **production-ready microservices web applic
 - [x] PostService (posts CRUD, validation)
 - [x] LikeService (post interactions, user tracking)
 - [x] CommentService (threaded comments, moderation)
-- [ ] UserService (authentication, user profiles) - In Progress
+- [x] UserService (authentication, user profiles)
 - [ ] NotificationService (real-time notifications)
 - [ ] Frontend React app
 - [ ] WebSocket implementation
@@ -94,7 +94,7 @@ Each phase includes detailed instructions in its respective directory. Start wit
 | **PostService** | 🟢 Running | `/health` | `/api/posts/*` | PostgreSQL | CRUD operations, validation |
 | **LikeService** | 🟢 Running | `/health` | `/api/likes/*` | PostgreSQL | Post interactions, user tracking |
 | **CommentService** | 🟢 Running | `/health` | `/api/comments/*` | PostgreSQL | Threaded comments, moderation |
-| **UserService** | 🟡 In Development | `/health` | `/api/users/*` | PostgreSQL | Authentication, profiles |
+| **UserService** | 🟢 Running | `/health` | `/api/users/*` | PostgreSQL | Authentication, profiles |
 
 ### 📦 **Shared Components**
 - **WebApp.Common**: Shared library with common models, DTOs, and utilities
@@ -214,8 +214,8 @@ terraform init && terraform apply
 | Azure Infrastructure | ✅ Complete | 100% |
 | Multi-Cloud Setup | ✅ Complete | 100% |
 | Kubernetes Config | ✅ Complete | 100% |
-| Application Dev | 🚧 In Progress | 45% |
-| └─ Microservices | ✅ 3/4 Services | 75% |
+| Application Dev | 🚧 In Progress | 55% |
+| └─ Microservices | ✅ 4/4 Services | 100% |
 | └─ Frontend | ⏳ Planned | 0% |
 | Local Development | ⏳ Planned | 0% |
 | Cloud Deployments | ⏳ Planned | 0% |
