@@ -777,3 +777,7 @@ TestResults/
 # Build scripts logs
 build.log
 test.log
+
+# Code coverage reports
+coverage-report/
+LikeRepoTestResults/
