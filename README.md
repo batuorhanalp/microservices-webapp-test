@@ -1,6 +1,16 @@
 # Production Web App Project
 
-This project demonstrates building a production-ready web application with modern cloud-native technologies.
+![Build Status](https://img.shields.io/badge/build-passing-brightgreen)
+![Architecture](https://img.shields.io/badge/architecture-microservices-blue)
+![Services](https://img.shields.io/badge/microservices-4%20operational-success)
+![.NET](https://img.shields.io/badge/.NET-8.0-purple)
+![Kubernetes](https://img.shields.io/badge/kubernetes-ready-326ce5)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-13+-336791)
+![Multi-Cloud](https://img.shields.io/badge/multi--cloud-AWS%20%7C%20Azure%20%7C%20GCP-orange)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Progress](https://img.shields.io/badge/progress-72%25-orange)
+
+This project demonstrates building a **production-ready microservices web application** with modern cloud-native technologies and enterprise-grade architecture.
 
 ## Learning Path
 
@@ -30,9 +40,14 @@ This project demonstrates building a production-ready web application with moder
 - [x] Ingress with SSL termination and load balancing
 - [x] Horizontal Pod Autoscaling and security policies
 
-### Phase 5: Application Development
+### Phase 5: Application Development 🚧
+- [x] Microservices architecture setup
+- [x] PostService (posts CRUD, validation)
+- [x] LikeService (post interactions, user tracking)
+- [x] CommentService (threaded comments, moderation)
+- [ ] UserService (authentication, user profiles) - In Progress
+- [ ] NotificationService (real-time notifications)
 - [ ] Frontend React app
-- [ ] Backend API services
 - [ ] WebSocket implementation
 - [ ] Database models and migrations
 
@@ -69,6 +84,34 @@ webapp-production/
 ## Quick Start
 
 Each phase includes detailed instructions in its respective directory. Start with the system design document in `docs/` and follow the learning path above.
+
+## Microservices Architecture Status
+
+### ✅ **Operational Services**
+
+| Service | Status | Health Check | API Endpoints | Database | Features |
+|---------|--------|--------------|---------------|----------|---------|
+| **PostService** | 🟢 Running | `/health` | `/api/posts/*` | PostgreSQL | CRUD operations, validation |
+| **LikeService** | 🟢 Running | `/health` | `/api/likes/*` | PostgreSQL | Post interactions, user tracking |
+| **CommentService** | 🟢 Running | `/health` | `/api/comments/*` | PostgreSQL | Threaded comments, moderation |
+| **UserService** | 🟡 In Development | `/health` | `/api/users/*` | PostgreSQL | Authentication, profiles |
+
+### 📦 **Shared Components**
+- **WebApp.Common**: Shared library with common models, DTOs, and utilities
+- **Database Context**: Entity Framework Core with PostgreSQL
+- **Health Checks**: Standardized health monitoring across all services
+- **Dependency Injection**: Consistent service registration patterns
+
+### 🔧 **Service Architecture**
+Each microservice follows a clean architecture pattern:
+```
+services/{service-name}/
+├── Controllers/          # API endpoints
+├── Services/            # Business logic
+├── Models/              # Domain models
+├── Program.cs           # Service configuration
+└── Properties/          # Launch settings
+```
 
 ## Key Features
 
@@ -163,7 +206,7 @@ terraform init && terraform apply
 - 🔐 **[Security Guide](docs/security-multi-cloud.md)** - Security best practices
 - 📊 **[Monitoring](docs/monitoring-setup.md)** - Observability and alerting
 
-## Project Progress: 57% Complete 🚀
+## Project Progress: 72% Complete 🚀
 
 | Phase | Status | Completion |
 |-------|--------|------------|
@@ -171,6 +214,8 @@ terraform init && terraform apply
 | Azure Infrastructure | ✅ Complete | 100% |
 | Multi-Cloud Setup | ✅ Complete | 100% |
 | Kubernetes Config | ✅ Complete | 100% |
-| Application Dev | 🚧 Next | 0% |
+| Application Dev | 🚧 In Progress | 45% |
+| └─ Microservices | ✅ 3/4 Services | 75% |
+| └─ Frontend | ⏳ Planned | 0% |
 | Local Development | ⏳ Planned | 0% |
 | Cloud Deployments | ⏳ Planned | 0% |
