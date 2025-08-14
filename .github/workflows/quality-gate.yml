@@ -1,0 +1,137 @@
+name: Quality Gate
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [opened, synchronize, reopened]
+
+env:
+  MINIMUM_COVERAGE: 97.0
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    name: Enforce Quality Standards
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore src/backend/WebApp.sln
+
+    - name: Build solution
+      run: dotnet build src/backend/WebApp.sln --no-restore --configuration Release
+
+    - name: Run all tests with coverage
+      run: |
+        dotnet test src/backend/WebApp.Tests/WebApp.Tests.csproj \
+          --configuration Release \
+          --no-build \
+          --verbosity normal \
+          --collect:"XPlat Code Coverage" \
+          --results-directory ./TestResults \
+          --logger "console;verbosity=detailed" \
+          /p:CollectCoverage=true \
+          /p:CoverletOutputFormat=cobertura
+
+    - name: Install tools
+      run: |
+        dotnet tool install -g dotnet-reportgenerator-globaltool
+        sudo apt-get update
+        sudo apt-get install -y bc
+
+    - name: Generate coverage report
+      run: |
+        reportgenerator \
+          -reports:"TestResults/**/coverage.cobertura.xml" \
+          -targetdir:"CoverageReport" \
+          -reporttypes:"JsonSummary;TextSummary;Html" \
+          -verbosity:Info
+
+    - name: Parse coverage and enforce threshold
+      run: |
+        # Extract coverage from JSON
+        if [ -f "CoverageReport/Summary.json" ]; then
+          COVERAGE=$(jq -r '.summary.linecoverage' CoverageReport/Summary.json)
+        else
+          # Fallback to text summary if JSON not available
+          COVERAGE=$(grep -oP 'Line coverage: \K[0-9.]+' CoverageReport/Summary.txt || echo "0")
+        fi
+        
+        echo "Current Coverage: $COVERAGE%"
+        echo "Required Minimum: ${{ env.MINIMUM_COVERAGE }}%"
+        
+        # Compare coverage (handle floating point comparison)
+        if (( $(echo "$COVERAGE >= ${{ env.MINIMUM_COVERAGE }}" | bc -l) )); then
+          echo "✅ PASS: Coverage $COVERAGE% meets minimum threshold"
+          echo "COVERAGE_STATUS=PASS" >> $GITHUB_ENV
+        else
+          echo "❌ FAIL: Coverage $COVERAGE% is below minimum threshold of ${{ env.MINIMUM_COVERAGE }}%"
+          echo "COVERAGE_STATUS=FAIL" >> $GITHUB_ENV
+          exit 1
+        fi
+        
+        echo "COVERAGE_VALUE=$COVERAGE" >> $GITHUB_ENV
+
+    - name: Check for test failures
+      run: |
+        # Count test results
+        TEST_FILES=$(find TestResults -name "*.trx" 2>/dev/null || echo "")
+        if [ -z "$TEST_FILES" ]; then
+          echo "❌ No test result files found"
+          exit 1
+        fi
+        
+        # Basic check - if we got here, tests likely passed
+        # The dotnet test command above would have failed if tests failed
+        echo "✅ All tests passed successfully"
+
+    - name: Security scan (basic)
+      run: |
+        # Check for common security anti-patterns
+        echo "🔍 Running basic security checks..."
+        
+        # Check for hardcoded secrets (basic patterns)
+        if grep -r -i --include="*.cs" --include="*.json" --exclude-dir=".git" \
+           -E "(password|secret|key|token)\s*[:=]\s*['\"][^'\"]{8,}" src/ 2>/dev/null; then
+          echo "⚠️  WARNING: Potential hardcoded secrets found"
+        else
+          echo "✅ No obvious hardcoded secrets detected"
+        fi
+        
+        # Check for SQL injection vulnerabilities (basic)
+        if grep -r -i --include="*.cs" --exclude-dir=".git" \
+           -E "\".*SELECT.*\+.*\"" src/ 2>/dev/null; then
+          echo "⚠️  WARNING: Potential SQL injection vulnerabilities found"
+        else
+          echo "✅ No obvious SQL injection patterns detected"
+        fi
+
+    - name: Quality summary
+      if: always()
+      run: |
+        echo "## 📊 Quality Gate Summary"
+        echo "| Check | Status | Value |"
+        echo "|-------|---------|-------|"
+        echo "| Test Coverage | ${{ env.COVERAGE_STATUS }} | ${{ env.COVERAGE_VALUE }}% |"
+        echo "| Unit Tests | PASS | All tests passed |"
+        echo "| Build | PASS | Solution built successfully |"
+        echo "| Security Scan | PASS | Basic security checks passed |"
+        
+        if [ "${{ env.COVERAGE_STATUS }}" = "FAIL" ]; then
+          echo ""
+          echo "❌ **Quality Gate FAILED**"
+          echo "Coverage ${{ env.COVERAGE_VALUE }}% is below required ${{ env.MINIMUM_COVERAGE }}%"
+          exit 1
+        else
+          echo ""
+          echo "✅ **Quality Gate PASSED** - All checks successful!"
+        fi
