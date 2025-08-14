@@ -1,9 +1,9 @@
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
-using WebApp.Application.Services;
-using WebApp.Core.Entities;
-using WebApp.Core.Interfaces;
+using WebApp.Common.Services;
+using WebApp.Common.Entities;
+using WebApp.Common.Interfaces;
 using Xunit;
 
 namespace WebApp.Tests.Application.Services;
@@ -116,7 +116,7 @@ public class UserServiceTests
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var expectedUser = new User("user@example.com", "user", "User");
+        var expectedUser = new User("user@example.com", "user", "User", "hashedpassword");
         
         _mockUserRepository.Setup(r => r.GetByIdAsync(userId))
             .ReturnsAsync(expectedUser);
@@ -152,7 +152,7 @@ public class UserServiceTests
     {
         // Arrange
         var userId = Guid.NewGuid();
-        var user = new User("user@example.com", "user", "User");
+        var user = new User("user@example.com", "user", "User", "hashedpassword");
         var newDisplayName = "Updated User";
         var newBio = "Updated bio";
         
@@ -196,8 +196,8 @@ public class UserServiceTests
         // Arrange
         var followerId = Guid.NewGuid();
         var followeeId = Guid.NewGuid();
-        var follower = new User("follower@example.com", "follower", "Follower");
-        var followee = new User("followee@example.com", "followee", "Followee");
+        var follower = new User("follower@example.com", "follower", "Follower", "hashedpassword");
+        var followee = new User("followee@example.com", "followee", "Followee", "hashedpassword");
         
         _mockUserRepository.Setup(r => r.GetByIdAsync(followerId))
             .ReturnsAsync(follower);
@@ -251,7 +251,7 @@ public class UserServiceTests
         // Arrange
         var followerId = Guid.NewGuid();
         var followeeId = Guid.NewGuid();
-        var follower = new User("follower@example.com", "follower", "Follower");
+        var follower = new User("follower@example.com", "follower", "Follower", "hashedpassword");
         
         _mockUserRepository.Setup(r => r.GetByIdAsync(followerId))
             .ReturnsAsync(follower);
@@ -271,8 +271,8 @@ public class UserServiceTests
         // Arrange
         var followerId = Guid.NewGuid();
         var followeeId = Guid.NewGuid();
-        var follower = new User("follower@example.com", "follower", "Follower");
-        var followee = new User("followee@example.com", "followee", "Followee");
+        var follower = new User("follower@example.com", "follower", "Follower", "hashedpassword");
+        var followee = new User("followee@example.com", "followee", "Followee", "hashedpassword");
         
         _mockUserRepository.Setup(r => r.GetByIdAsync(followerId))
             .ReturnsAsync(follower);
@@ -297,8 +297,8 @@ public class UserServiceTests
         var searchTerm = "test";
         var expectedUsers = new List<User>
         {
-            new User("test1@example.com", "test1", "Test User 1"),
-            new User("test2@example.com", "test2", "Test User 2")
+            new User("test1@example.com", "test1", "Test User 1", "hashedpassword"),
+            new User("test2@example.com", "test2", "Test User 2", "hashedpassword")
         };
         
         _mockUserRepository.Setup(r => r.SearchByUsernameAsync(searchTerm, 20))
@@ -453,7 +453,7 @@ public class UserServiceTests
     {
         // Arrange
         var searchTerm = "test";
-        var expectedUsers = new List<User> { new User("test@example.com", "test", "Test") };
+        var expectedUsers = new List<User> { new User("test@example.com", "test", "Test", "hashedpassword") };
         
         _mockUserRepository.Setup(r => r.SearchByUsernameAsync(searchTerm, 20))
             .ReturnsAsync(expectedUsers);
@@ -471,7 +471,7 @@ public class UserServiceTests
     {
         // Arrange
         var searchTerm = "test";
-        var expectedUsers = new List<User> { new User("test@example.com", "test", "Test") };
+        var expectedUsers = new List<User> { new User("test@example.com", "test", "Test", "hashedpassword") };
         
         _mockUserRepository.Setup(r => r.SearchByUsernameAsync(searchTerm, 20))
             .ReturnsAsync(expectedUsers);

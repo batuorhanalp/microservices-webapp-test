@@ -1,5 +1,5 @@
 using FluentAssertions;
-using WebApp.Core.Entities;
+using WebApp.Common.Entities;
 using Xunit;
 
 namespace WebApp.Tests.Core.Entities;
@@ -15,7 +15,7 @@ public class UserTests
         var displayName = "Test User";
 
         // Act
-        var user = new User(email, username, displayName);
+        var user = new User(email, username, displayName, "hashedpassword");
 
         // Assert
         user.Id.Should().NotBeEmpty();
@@ -35,7 +35,7 @@ public class UserTests
     public void CreateUser_WithInvalidEmail_ShouldThrowArgumentException(string invalidEmail)
     {
         // Arrange & Act & Assert
-        var action = () => new User(invalidEmail, "username", "Display Name");
+        var action = () => new User(invalidEmail, "username", "Display Name", "hashedpassword");
         
         action.Should().Throw<ArgumentException>()
             .WithMessage("Email is required*")
@@ -49,7 +49,7 @@ public class UserTests
     public void CreateUser_WithInvalidUsername_ShouldThrowArgumentException(string invalidUsername)
     {
         // Arrange & Act & Assert
-        var action = () => new User("test@example.com", invalidUsername, "Display Name");
+        var action = () => new User("test@example.com", invalidUsername, "Display Name", "hashedpassword");
         
         action.Should().Throw<ArgumentException>()
             .WithMessage("Username is required*")
@@ -63,7 +63,7 @@ public class UserTests
     public void CreateUser_WithInvalidDisplayName_ShouldThrowArgumentException(string invalidDisplayName)
     {
         // Arrange & Act & Assert
-        var action = () => new User("test@example.com", "username", invalidDisplayName);
+        var action = () => new User("test@example.com", "username", invalidDisplayName, "hashedpassword");
         
         action.Should().Throw<ArgumentException>()
             .WithMessage("Display name is required*")
@@ -74,7 +74,7 @@ public class UserTests
     public void UpdateProfile_WithValidData_ShouldUpdateFields()
     {
         // Arrange
-        var user = new User("test@example.com", "username", "Original Name");
+        var user = new User("test@example.com", "username", "Original Name", "hashedpassword");
         var originalUpdatedAt = user.UpdatedAt;
         
         // Act
@@ -92,7 +92,7 @@ public class UserTests
     public void UpdateProfile_WithNullValues_ShouldHandleGracefully()
     {
         // Arrange
-        var user = new User("test@example.com", "username", "Original Name");
+        var user = new User("test@example.com", "username", "Original Name", "hashedpassword");
 
         // Act
         user.UpdateProfile("New Name", null, null, null);
@@ -108,7 +108,7 @@ public class UserTests
     public void SetPrivacyStatus_WhenCalled_ShouldUpdatePrivacyAndTimestamp()
     {
         // Arrange
-        var user = new User("test@example.com", "username", "Display Name");
+        var user = new User("test@example.com", "username", "Display Name", "hashedpassword");
         var originalUpdatedAt = user.UpdatedAt;
         Thread.Sleep(1); // Ensure time difference
 
@@ -124,7 +124,7 @@ public class UserTests
     public void SetVerificationStatus_WhenCalled_ShouldUpdateVerificationAndTimestamp()
     {
         // Arrange
-        var user = new User("test@example.com", "username", "Display Name");
+        var user = new User("test@example.com", "username", "Display Name", "hashedpassword");
         var originalUpdatedAt = user.UpdatedAt;
         Thread.Sleep(1); // Ensure time difference
 
@@ -140,7 +140,7 @@ public class UserTests
     public void SetBirthDate_WithValidAge_ShouldSetBirthDate()
     {
         // Arrange
-        var user = new User("test@example.com", "username", "Display Name");
+        var user = new User("test@example.com", "username", "Display Name", "hashedpassword");
         var validBirthDate = DateTime.UtcNow.AddYears(-20);
 
         // Act
@@ -154,7 +154,7 @@ public class UserTests
     public void SetBirthDate_WithUnderageUser_ShouldThrowException()
     {
         // Arrange
-        var user = new User("test@example.com", "username", "Display Name");
+        var user = new User("test@example.com", "username", "Display Name", "hashedpassword");
         var underageBirthDate = DateTime.UtcNow.AddYears(-10);
 
         // Act & Assert
@@ -168,7 +168,7 @@ public class UserTests
     public void UpdateProfileImage_WithValidUrl_ShouldUpdateImageAndTimestamp()
     {
         // Arrange
-        var user = new User("test@example.com", "username", "Display Name");
+        var user = new User("test@example.com", "username", "Display Name", "hashedpassword");
         var imageUrl = "https://example.com/image.jpg";
         var originalUpdatedAt = user.UpdatedAt;
         Thread.Sleep(1);
@@ -185,7 +185,7 @@ public class UserTests
     public void UpdateCoverImage_WithValidUrl_ShouldUpdateImageAndTimestamp()
     {
         // Arrange
-        var user = new User("test@example.com", "username", "Display Name");
+        var user = new User("test@example.com", "username", "Display Name", "hashedpassword");
         var coverUrl = "https://example.com/cover.jpg";
         var originalUpdatedAt = user.UpdatedAt;
         Thread.Sleep(1);

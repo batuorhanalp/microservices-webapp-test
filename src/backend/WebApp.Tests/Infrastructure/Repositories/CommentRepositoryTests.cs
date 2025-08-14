@@ -1,9 +1,9 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using WebApp.Core.Entities;
-using WebApp.Core.Interfaces;
-using WebApp.Infrastructure.Data;
-using WebApp.Infrastructure.Repositories;
+using WebApp.Common.Entities;
+using WebApp.Common.Interfaces;
+using WebApp.Common.Data;
+using WebApp.Common.Repositories;
 using Xunit;
 
 namespace WebApp.Tests.Infrastructure.Repositories;
@@ -27,7 +27,7 @@ public class CommentRepositoryTests : IDisposable
     public async Task GetByIdAsync_WithValidId_ShouldReturnComment()
     {
         // Arrange
-        var user = new User("user@example.com", "user", "User");
+        var user = new User("user@example.com", "user", "User", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -67,7 +67,7 @@ public class CommentRepositoryTests : IDisposable
     public async Task GetByPostAsync_WithValidPostId_ShouldReturnCommentsOrderedByDate()
     {
         // Arrange
-        var user = new User("user@example.com", "user", "User");
+        var user = new User("user@example.com", "user", "User", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -98,8 +98,8 @@ public class CommentRepositoryTests : IDisposable
     public async Task GetByAuthorAsync_WithValidAuthorId_ShouldReturnAuthorComments()
     {
         // Arrange
-        var user1 = new User("user1@example.com", "user1", "User 1");
-        var user2 = new User("user2@example.com", "user2", "User 2");
+        var user1 = new User("user1@example.com", "user1", "User 1", "hashedpassword1");
+        var user2 = new User("user2@example.com", "user2", "User 2", "hashedpassword2");
         await _context.Users.AddRangeAsync(user1, user2);
         await _context.SaveChangesAsync();
 
@@ -129,7 +129,7 @@ public class CommentRepositoryTests : IDisposable
     public async Task AddAsync_WithValidComment_ShouldAddCommentToDatabase()
     {
         // Arrange
-        var user = new User("user@example.com", "user", "User");
+        var user = new User("user@example.com", "user", "User", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -154,7 +154,7 @@ public class CommentRepositoryTests : IDisposable
     public async Task UpdateAsync_WithValidComment_ShouldUpdateCommentInDatabase()
     {
         // Arrange
-        var user = new User("user@example.com", "user", "User");
+        var user = new User("user@example.com", "user", "User", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -184,7 +184,7 @@ public class CommentRepositoryTests : IDisposable
     public async Task DeleteAsync_WithValidId_ShouldRemoveCommentFromDatabase()
     {
         // Arrange
-        var user = new User("user@example.com", "user", "User");
+        var user = new User("user@example.com", "user", "User", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 

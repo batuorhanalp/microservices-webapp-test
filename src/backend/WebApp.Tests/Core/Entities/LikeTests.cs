@@ -1,5 +1,5 @@
 using FluentAssertions;
-using WebApp.Core.Entities;
+using WebApp.Common.Entities;
 using Xunit;
 
 namespace WebApp.Tests.Core.Entities;

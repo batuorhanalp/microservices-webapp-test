@@ -1,5 +1,5 @@
 using FluentAssertions;
-using WebApp.Core.Entities;
+using WebApp.Common.Entities;
 using Xunit;
 
 namespace WebApp.Tests.Core.Entities;
@@ -173,8 +173,8 @@ public class PostTests
     public void CanBeViewedBy_PublicPost_ShouldReturnTrueForAnyUser()
     {
         // Arrange
-        var author = new User("author@example.com", "author", "Author");
-        var viewer = new User("viewer@example.com", "viewer", "Viewer");
+        var author = new User("author@example.com", "author", "Author", "hashedpassword1");
+        var viewer = new User("viewer@example.com", "viewer", "Viewer", "hashedpassword2");
         var post = new Post(author.Id, "Public post", PostType.Text, PostVisibility.Public);
 
         // Act & Assert
@@ -185,8 +185,8 @@ public class PostTests
     public void CanBeViewedBy_PrivatePost_ShouldReturnFalseForNonAuthor()
     {
         // Arrange
-        var author = new User("author@example.com", "author", "Author");
-        var viewer = new User("viewer@example.com", "viewer", "Viewer");
+        var author = new User("author@example.com", "author", "Author", "hashedpassword1");
+        var viewer = new User("viewer@example.com", "viewer", "Viewer", "hashedpassword2");
         var post = new Post(author.Id, "Private post", PostType.Text, PostVisibility.Private);
 
         // Act & Assert
@@ -197,7 +197,7 @@ public class PostTests
     public void CanBeViewedBy_PostByAuthor_ShouldReturnTrueForAuthor()
     {
         // Arrange
-        var author = new User("author@example.com", "author", "Author");
+        var author = new User("author@example.com", "author", "Author", "hashedpassword");
         var post = new Post(author.Id, "Author's post", PostType.Text, PostVisibility.Private);
 
         // Act & Assert
@@ -208,8 +208,8 @@ public class PostTests
     public void CanBeViewedBy_FollowersOnlyPost_ShouldReturnTrueForAcceptedFollower()
     {
         // Arrange
-        var author = new User("author@example.com", "author", "Author");
-        var follower = new User("follower@example.com", "follower", "Follower");
+        var author = new User("author@example.com", "author", "Author", "hashedpassword1");
+        var follower = new User("follower@example.com", "follower", "Follower", "hashedpassword2");
         var post = new Post(author.Id, "Followers only post", PostType.Text, PostVisibility.Followers);
         
         // Add follower relationship
@@ -327,8 +327,8 @@ public class PostTests
     public void CanBeViewedBy_FollowersOnlyPost_ShouldReturnFalseForNonFollower()
     {
         // Arrange
-        var author = new User("author@example.com", "author", "Author");
-        var nonFollower = new User("nonfollower@example.com", "nonfollower", "NonFollower");
+        var author = new User("author@example.com", "author", "Author", "hashedpassword1");
+        var nonFollower = new User("nonfollower@example.com", "nonfollower", "NonFollower", "hashedpassword2");
         var post = new Post(author.Id, "Followers only post", PostType.Text, PostVisibility.Followers);
 
         // Act & Assert
@@ -339,8 +339,8 @@ public class PostTests
     public void CanBeViewedBy_FollowersOnlyPost_ShouldReturnFalseForPendingFollower()
     {
         // Arrange
-        var author = new User("author@example.com", "author", "Author");
-        var pendingFollower = new User("pending@example.com", "pending", "Pending");
+        var author = new User("author@example.com", "author", "Author", "hashedpassword1");
+        var pendingFollower = new User("pending@example.com", "pending", "Pending", "hashedpassword2");
         var post = new Post(author.Id, "Followers only post", PostType.Text, PostVisibility.Followers);
         
         // Add pending follow relationship

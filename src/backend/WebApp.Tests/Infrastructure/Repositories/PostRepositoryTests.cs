@@ -1,9 +1,9 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using WebApp.Core.Entities;
-using WebApp.Core.Interfaces;
-using WebApp.Infrastructure.Data;
-using WebApp.Infrastructure.Repositories;
+using WebApp.Common.Entities;
+using WebApp.Common.Interfaces;
+using WebApp.Common.Data;
+using WebApp.Common.Repositories;
 using Xunit;
 
 namespace WebApp.Tests.Infrastructure.Repositories;
@@ -27,7 +27,7 @@ public class PostRepositoryTests : IDisposable
     public async Task GetByIdAsync_WithValidId_ShouldReturnPost()
     {
         // Arrange
-        var user = new User("author@example.com", "author", "Author");
+        var user = new User("author@example.com", "author", "Author", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -62,8 +62,8 @@ public class PostRepositoryTests : IDisposable
     public async Task GetByAuthorAsync_WithValidAuthorId_ShouldReturnAuthorPosts()
     {
         // Arrange
-        var user1 = new User("author1@example.com", "author1", "Author 1");
-        var user2 = new User("author2@example.com", "author2", "Author 2");
+        var user1 = new User("author1@example.com", "author1", "Author 1", "hashedpassword");
+        var user2 = new User("author2@example.com", "author2", "Author 2", "hashedpassword");
         await _context.Users.AddRangeAsync(user1, user2);
         await _context.SaveChangesAsync();
 
@@ -88,8 +88,8 @@ public class PostRepositoryTests : IDisposable
     public async Task GetFeedAsync_WithFollowedUsers_ShouldReturnPostsFromFollowedUsers()
     {
         // Arrange
-        var user = new User("user@example.com", "user", "User");
-        var followed = new User("followed@example.com", "followed", "Followed");
+        var user = new User("user@example.com", "user", "User", "hashedpassword");
+        var followed = new User("followed@example.com", "followed", "Followed", "hashedpassword");
         await _context.Users.AddRangeAsync(user, followed);
         await _context.SaveChangesAsync();
 
@@ -113,8 +113,8 @@ public class PostRepositoryTests : IDisposable
     public async Task GetPublicTimelineAsync_ShouldReturnPublicPostsOrderedByDate()
     {
         // Arrange
-        var user1 = new User("user1@example.com", "user1", "User 1");
-        var user2 = new User("user2@example.com", "user2", "User 2");
+        var user1 = new User("user1@example.com", "user1", "User 1", "hashedpassword");
+        var user2 = new User("user2@example.com", "user2", "User 2", "hashedpassword");
         await _context.Users.AddRangeAsync(user1, user2);
         await _context.SaveChangesAsync();
 
@@ -139,7 +139,7 @@ public class PostRepositoryTests : IDisposable
     public async Task GetRepliesAsync_WithValidPostId_ShouldReturnReplies()
     {
         // Arrange
-        var user = new User("user@example.com", "user", "User");
+        var user = new User("user@example.com", "user", "User", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -167,7 +167,7 @@ public class PostRepositoryTests : IDisposable
     public async Task AddAsync_WithValidPost_ShouldAddPostToDatabase()
     {
         // Arrange
-        var user = new User("user@example.com", "user", "User");
+        var user = new User("user@example.com", "user", "User", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -187,7 +187,7 @@ public class PostRepositoryTests : IDisposable
     public async Task UpdateAsync_WithValidPost_ShouldUpdatePostInDatabase()
     {
         // Arrange
-        var user = new User("user@example.com", "user", "User");
+        var user = new User("user@example.com", "user", "User", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -213,7 +213,7 @@ public class PostRepositoryTests : IDisposable
     public async Task DeleteAsync_WithValidId_ShouldRemovePostFromDatabase()
     {
         // Arrange
-        var user = new User("user@example.com", "user", "User");
+        var user = new User("user@example.com", "user", "User", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -234,7 +234,7 @@ public class PostRepositoryTests : IDisposable
     public async Task GetWithMediaAsync_WithValidPostId_ShouldReturnPost()
     {
         // Arrange
-        var user = new User("user@example.com", "user", "User");
+        var user = new User("user@example.com", "user", "User", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -256,7 +256,7 @@ public class PostRepositoryTests : IDisposable
     public async Task SearchAsync_WithSearchTerm_ShouldReturnMatchingPosts()
     {
         // Arrange
-        var user = new User("user@example.com", "user", "User");
+        var user = new User("user@example.com", "user", "User", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -281,7 +281,7 @@ public class PostRepositoryTests : IDisposable
     public async Task GetTrendingAsync_ShouldReturnPostsOrderedByEngagement()
     {
         // Arrange
-        var user = new User("user@example.com", "user", "User");
+        var user = new User("user@example.com", "user", "User", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -313,8 +313,8 @@ public class PostRepositoryTests : IDisposable
     public async Task GetLikeCountAsync_WithValidPostId_ShouldReturnCorrectCount()
     {
         // Arrange
-        var user1 = new User("user1@example.com", "user1", "User 1");
-        var user2 = new User("user2@example.com", "user2", "User 2");
+        var user1 = new User("user1@example.com", "user1", "User 1", "hashedpassword");
+        var user2 = new User("user2@example.com", "user2", "User 2", "hashedpassword");
         await _context.Users.AddRangeAsync(user1, user2);
         await _context.SaveChangesAsync();
 
@@ -341,7 +341,7 @@ public class PostRepositoryTests : IDisposable
     public async Task GetCommentCountAsync_WithValidPostId_ShouldReturnCorrectCount()
     {
         // Arrange
-        var user = new User("user@example.com", "user", "User");
+        var user = new User("user@example.com", "user", "User", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 

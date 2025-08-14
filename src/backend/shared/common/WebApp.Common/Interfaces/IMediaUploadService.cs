@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using WebApp.Common.DTOs;
 using WebApp.Common.Entities;
 

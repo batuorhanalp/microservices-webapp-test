@@ -1,9 +1,9 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using WebApp.Core.Entities;
-using WebApp.Core.Interfaces;
-using WebApp.Infrastructure.Data;
-using WebApp.Infrastructure.Repositories;
+using WebApp.Common.Entities;
+using WebApp.Common.Interfaces;
+using WebApp.Common.Data;
+using WebApp.Common.Repositories;
 using Xunit;
 
 namespace WebApp.Tests.Infrastructure.Repositories;
@@ -28,7 +28,7 @@ public class UserRepositoryTests : IDisposable
     public async Task GetByIdAsync_WithValidId_ShouldReturnUser()
     {
         // Arrange - RED: This test will fail because UserRepository doesn't exist yet
-        var user = new User("test@example.com", "testuser", "Test User");
+        var user = new User("test@example.com", "testuser", "Test User", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -60,7 +60,7 @@ public class UserRepositoryTests : IDisposable
     public async Task GetByEmailAsync_WithValidEmail_ShouldReturnUser()
     {
         // Arrange
-        var user = new User("unique@example.com", "uniqueuser", "Unique User");
+        var user = new User("unique@example.com", "uniqueuser", "Unique User", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -86,7 +86,7 @@ public class UserRepositoryTests : IDisposable
     public async Task GetByUsernameAsync_WithValidUsername_ShouldReturnUser()
     {
         // Arrange
-        var user = new User("username@example.com", "testusername", "Test User");
+        var user = new User("username@example.com", "testusername", "Test User", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -112,7 +112,7 @@ public class UserRepositoryTests : IDisposable
     public async Task AddAsync_WithValidUser_ShouldAddUserToDatabase()
     {
         // Arrange
-        var user = new User("add@example.com", "adduser", "Add User");
+        var user = new User("add@example.com", "adduser", "Add User", "hashedpassword");
 
         // Act
         await _userRepository.AddAsync(user);
@@ -128,7 +128,7 @@ public class UserRepositoryTests : IDisposable
     public async Task UpdateAsync_WithValidUser_ShouldUpdateUserInDatabase()
     {
         // Arrange
-        var user = new User("update@example.com", "updateuser", "Original Name");
+        var user = new User("update@example.com", "updateuser", "Original Name", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -150,7 +150,7 @@ public class UserRepositoryTests : IDisposable
     public async Task DeleteAsync_WithValidId_ShouldRemoveUserFromDatabase()
     {
         // Arrange
-        var user = new User("delete@example.com", "deleteuser", "Delete User");
+        var user = new User("delete@example.com", "deleteuser", "Delete User", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -167,8 +167,8 @@ public class UserRepositoryTests : IDisposable
     public async Task GetFollowersAsync_WithValidUserId_ShouldReturnFollowers()
     {
         // Arrange
-        var user = new User("followed@example.com", "followed", "Followed User");
-        var follower = new User("follower@example.com", "follower", "Follower User");
+        var user = new User("followed@example.com", "followed", "Followed User", "hashedpassword");
+        var follower = new User("follower@example.com", "follower", "Follower User", "hashedpassword");
         await _context.Users.AddRangeAsync(user, follower);
         await _context.SaveChangesAsync();
 
@@ -188,8 +188,8 @@ public class UserRepositoryTests : IDisposable
     public async Task GetFollowingAsync_WithValidUserId_ShouldReturnFollowing()
     {
         // Arrange
-        var user = new User("follower@example.com", "follower", "Follower User");
-        var followed = new User("followed@example.com", "followed", "Followed User");
+        var user = new User("follower@example.com", "follower", "Follower User", "hashedpassword");
+        var followed = new User("followed@example.com", "followed", "Followed User", "hashedpassword");
         await _context.Users.AddRangeAsync(user, followed);
         await _context.SaveChangesAsync();
 
@@ -211,9 +211,9 @@ public class UserRepositoryTests : IDisposable
         // Arrange
         var users = new[]
         {
-            new User("search1@example.com", "searchuser1", "Search User 1"),
-            new User("search2@example.com", "searchuser2", "Search User 2"),
-            new User("other@example.com", "othername", "Other User")
+            new User("search1@example.com", "searchuser1", "Search User 1", "hashedpassword"),
+            new User("search2@example.com", "searchuser2", "Search User 2", "hashedpassword"),
+            new User("other@example.com", "othername", "Other User", "hashedpassword")
         };
         await _context.Users.AddRangeAsync(users);
         await _context.SaveChangesAsync();
@@ -230,7 +230,7 @@ public class UserRepositoryTests : IDisposable
     public async Task IsEmailTakenAsync_WithExistingEmail_ShouldReturnTrue()
     {
         // Arrange
-        var user = new User("taken@example.com", "takenuser", "Taken User");
+        var user = new User("taken@example.com", "takenuser", "Taken User", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 
@@ -255,7 +255,7 @@ public class UserRepositoryTests : IDisposable
     public async Task IsUsernameTakenAsync_WithExistingUsername_ShouldReturnTrue()
     {
         // Arrange
-        var user = new User("username@example.com", "takenusername", "Taken Username");
+        var user = new User("username@example.com", "takenusername", "Taken Username", "hashedpassword");
         await _context.Users.AddAsync(user);
         await _context.SaveChangesAsync();
 

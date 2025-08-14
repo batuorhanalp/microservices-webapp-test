@@ -1,6 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
-using WebApp.Infrastructure.Data;
+using WebApp.Common.Data;
 using Xunit;
 
 namespace WebApp.Tests.Infrastructure.Data;
