@@ -1,39 +1,64 @@
+using Microsoft.EntityFrameworkCore;
+using WebApp.Common.Data;
+using WebApp.Common.Interfaces;
+using WebApp.Common.Repositories;
+using WebApp.Common.Services;
+using WebApp.UserService.HealthChecks;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Database configuration
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? 
+    "Host=localhost;Database=webapp_userservice;Username=webapp;Password=webapp123;Include Error Detail=true";
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(connectionString));
+
+// Register repositories
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+// Register UserService implementation
+builder.Services.AddScoped<IUserService, WebApp.Common.Services.UserService>();
+
+// Health checks
+builder.Services.AddHealthChecks()
+    .AddCheck<DatabaseHealthCheck>("database");
+
+// Logging
+builder.Services.AddLogging();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
-var summaries = new[]
-{
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
+app.UseHttpsRedirection();
+app.UseAuthorization();
+app.MapControllers();
+app.MapHealthChecks("/health");
 
-app.MapGet("/weatherforecast", () =>
+// Ensure database is created
+using (var scope = app.Services.CreateScope())
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    try
+    {
+        context.Database.EnsureCreated();
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred creating the database");
+    }
+}
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
