@@ -1,0 +1,6 @@
+@WebApp.LikeService_HostAddress = http://localhost:5289
+
+GET {{WebApp.LikeService_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
