@@ -84,6 +84,29 @@ public class LikeRepository : ILikeRepository
             .AnyAsync(l => l.UserId == userId && l.PostId == postId);
     }
 
+    public async Task<int> GetCountByPostAsync(Guid postId)
+    {
+        return await _context.Likes
+            .CountAsync(l => l.PostId == postId);
+    }
+
+    public async Task<int> GetCountByUserAsync(Guid userId)
+    {
+        return await _context.Likes
+            .CountAsync(l => l.UserId == userId);
+    }
+
+    public async Task<IEnumerable<User>> GetUsersByPostAsync(Guid postId, int limit, int offset)
+    {
+        return await _context.Likes
+            .Where(l => l.PostId == postId)
+            .OrderByDescending(l => l.CreatedAt)
+            .Skip(offset)
+            .Take(limit)
+            .Select(l => l.User)
+            .ToListAsync();
+    }
+
     public async Task<int> SaveChangesAsync()
     {
         return await _context.SaveChangesAsync();
