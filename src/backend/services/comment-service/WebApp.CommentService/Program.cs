@@ -2,8 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using WebApp.Common.Data;
 using WebApp.Common.Interfaces;
 using WebApp.Common.Repositories;
-using WebApp.LikeService.Services;
-using WebApp.LikeService.HealthChecks;
+using WebApp.Common.Services;
+using WebApp.CommentService.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,18 +14,18 @@ builder.Services.AddSwaggerGen();
 
 // Database configuration
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? 
-    "Host=localhost;Database=webapp_likeservice;Username=webapp;Password=webapp123;Include Error Detail=true";
+    "Host=localhost;Database=webapp_commentservice;Username=webapp;Password=webapp123;Include Error Detail=true";
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 // Register repositories
-builder.Services.AddScoped<ILikeRepository, LikeRepository>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
 
-// Register LikeService implementation
-builder.Services.AddScoped<ILikeService, WebApp.LikeService.Services.LikeService>();
+// Register CommentService implementation
+builder.Services.AddScoped<ICommentService, WebApp.Common.Services.CommentService>();
 
 // Health checks
 builder.Services.AddHealthChecks()
