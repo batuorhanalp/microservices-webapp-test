@@ -22,6 +22,26 @@ public class UserServiceTests
     }
 
     [Fact]
+    public void Constructor_WithNullUserRepository_ShouldThrowArgumentNullException()
+    {
+        // Act & Assert
+        var exception = Assert.Throws<ArgumentNullException>(
+            () => new UserService(null!, _mockLogger.Object));
+        
+        exception.ParamName.Should().Be("userRepository");
+    }
+
+    [Fact]
+    public void Constructor_WithNullLogger_ShouldThrowArgumentNullException()
+    {
+        // Act & Assert
+        var exception = Assert.Throws<ArgumentNullException>(
+            () => new UserService(_mockUserRepository.Object, null!));
+        
+        exception.ParamName.Should().Be("logger");
+    }
+
+    [Fact]
     public async Task CreateUserAsync_WithValidData_ShouldCreateUser()
     {
         // Arrange
@@ -305,5 +325,162 @@ public class UserServiceTests
         // Assert
         result.Should().BeEmpty();
         _mockUserRepository.Verify(r => r.SearchByUsernameAsync(It.IsAny<string>(), It.IsAny<int>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("  ")]
+    [InlineData(null)]
+    public async Task CreateUserAsync_WithInvalidEmail_ShouldThrowException(string email)
+    {
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _userService.CreateUserAsync(email, "username", "Display Name"));
+        
+        exception.Message.Should().Contain("Email is required");
+        _mockUserRepository.Verify(r => r.IsEmailTakenAsync(It.IsAny<string>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("  ")]
+    [InlineData(null)]
+    public async Task CreateUserAsync_WithInvalidUsername_ShouldThrowException(string username)
+    {
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _userService.CreateUserAsync("email@example.com", username, "Display Name"));
+        
+        exception.Message.Should().Contain("Username is required");
+        _mockUserRepository.Verify(r => r.IsEmailTakenAsync(It.IsAny<string>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("  ")]
+    [InlineData(null)]
+    public async Task CreateUserAsync_WithInvalidDisplayName_ShouldThrowException(string displayName)
+    {
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _userService.CreateUserAsync("email@example.com", "username", displayName));
+        
+        exception.Message.Should().Contain("Display name is required");
+        _mockUserRepository.Verify(r => r.IsEmailTakenAsync(It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task GetUserByIdAsync_WithEmptyGuid_ShouldReturnNull()
+    {
+        // Act
+        var result = await _userService.GetUserByIdAsync(Guid.Empty);
+
+        // Assert
+        result.Should().BeNull();
+        _mockUserRepository.Verify(r => r.GetByIdAsync(It.IsAny<Guid>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task UpdateUserProfileAsync_WithEmptyUserId_ShouldThrowException()
+    {
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _userService.UpdateUserProfileAsync(Guid.Empty, "New Name"));
+        
+        exception.Message.Should().Contain("User ID cannot be empty");
+        _mockUserRepository.Verify(r => r.GetByIdAsync(It.IsAny<Guid>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("  ")]
+    [InlineData(null)]
+    public async Task UpdateUserProfileAsync_WithInvalidDisplayName_ShouldThrowException(string displayName)
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _userService.UpdateUserProfileAsync(userId, displayName));
+        
+        exception.Message.Should().Contain("Display name is required");
+        _mockUserRepository.Verify(r => r.GetByIdAsync(It.IsAny<Guid>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task FollowUserAsync_WithEmptyFollowerId_ShouldThrowException()
+    {
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _userService.FollowUserAsync(Guid.Empty, Guid.NewGuid()));
+        
+        exception.Message.Should().Contain("Follower ID cannot be empty");
+    }
+
+    [Fact]
+    public async Task FollowUserAsync_WithEmptyFolloweeId_ShouldThrowException()
+    {
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _userService.FollowUserAsync(Guid.NewGuid(), Guid.Empty));
+        
+        exception.Message.Should().Contain("Followee ID cannot be empty");
+    }
+
+    [Fact]
+    public async Task UnfollowUserAsync_WithEmptyFollowerId_ShouldThrowException()
+    {
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _userService.UnfollowUserAsync(Guid.Empty, Guid.NewGuid()));
+        
+        exception.Message.Should().Contain("Follower ID cannot be empty");
+    }
+
+    [Fact]
+    public async Task UnfollowUserAsync_WithEmptyFolloweeId_ShouldThrowException()
+    {
+        // Act & Assert
+        var exception = await Assert.ThrowsAsync<ArgumentException>(
+            () => _userService.UnfollowUserAsync(Guid.NewGuid(), Guid.Empty));
+        
+        exception.Message.Should().Contain("Followee ID cannot be empty");
+    }
+
+    [Fact]
+    public async Task SearchUsersAsync_WithZeroLimit_ShouldUseDefaultLimit()
+    {
+        // Arrange
+        var searchTerm = "test";
+        var expectedUsers = new List<User> { new User("test@example.com", "test", "Test") };
+        
+        _mockUserRepository.Setup(r => r.SearchByUsernameAsync(searchTerm, 20))
+            .ReturnsAsync(expectedUsers);
+
+        // Act
+        var result = await _userService.SearchUsersAsync(searchTerm, 0);
+
+        // Assert
+        result.Should().BeEquivalentTo(expectedUsers);
+        _mockUserRepository.Verify(r => r.SearchByUsernameAsync(searchTerm, 20), Times.Once);
+    }
+
+    [Fact]
+    public async Task SearchUsersAsync_WithNegativeLimit_ShouldUseDefaultLimit()
+    {
+        // Arrange
+        var searchTerm = "test";
+        var expectedUsers = new List<User> { new User("test@example.com", "test", "Test") };
+        
+        _mockUserRepository.Setup(r => r.SearchByUsernameAsync(searchTerm, 20))
+            .ReturnsAsync(expectedUsers);
+
+        // Act
+        var result = await _userService.SearchUsersAsync(searchTerm, -5);
+
+        // Assert
+        result.Should().BeEquivalentTo(expectedUsers);
+        _mockUserRepository.Verify(r => r.SearchByUsernameAsync(searchTerm, 20), Times.Once);
     }
 }
