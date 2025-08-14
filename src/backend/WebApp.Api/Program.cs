@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 using WebApp.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,7 +38,53 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new() { Title = "Social Media API", Version = "v1" });
+    c.SwaggerDoc("v1", new()
+    {
+        Title = "Social Media Backend API",
+        Version = "v1",
+        Description = "A comprehensive social media backend API built with .NET 8, featuring user management, posts, follows, likes, comments, shares, messages, and media attachments. Security-first design with performance optimizations and comprehensive test coverage.",
+        Contact = new() { Name = "Social Media API", Email = "support@socialmediaapi.com" },
+        License = new() { Name = "MIT", Url = new Uri("https://opensource.org/licenses/MIT") }
+    });
+
+    // Add JWT Authentication to Swagger
+    c.AddSecurityDefinition("Bearer", new()
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Enter 'Bearer' followed by a space and your JWT token."
+    });
+
+    c.AddSecurityRequirement(new()
+    {
+        {
+            new()
+            {
+                Reference = new() { Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme, Id = "Bearer" }
+            },
+            Array.Empty<string>()
+        }
+    });
+
+    // Include XML comments for better API documentation (optional)
+    // var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    // var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    // c.IncludeXmlComments(xmlPath);
+    
+    // Configure schema IDs to avoid conflicts
+    c.CustomSchemaIds(type => type.FullName?.Replace("+", "."));
+    
+    // Group endpoints by tags for better organization
+    c.TagActionsBy(api =>
+    {
+        var controllerName = api.ActionDescriptor.RouteValues["controller"];
+        return new[] { controllerName ?? "Default" };
+    });
+    
+    c.DocInclusionPredicate((name, api) => true);
 });
 
 var app = builder.Build();

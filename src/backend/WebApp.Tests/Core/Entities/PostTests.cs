@@ -233,4 +233,122 @@ public class PostTests
         // Assert
         post.Type.Should().Be(PostType.Mixed);
     }
+
+    [Theory]
+    [InlineData("image/jpeg", PostType.Image)]
+    [InlineData("image/png", PostType.Image)]
+    [InlineData("video/mp4", PostType.Video)]
+    [InlineData("video/avi", PostType.Video)]
+    [InlineData("audio/mp3", PostType.Audio)]
+    [InlineData("audio/wav", PostType.Audio)]
+    [InlineData("application/pdf", PostType.Text)]
+    [InlineData("text/plain", PostType.Text)]
+    public void AddMediaAttachment_WithDifferentContentTypes_ShouldSetCorrectPostType(string contentType, PostType expectedType)
+    {
+        // Arrange
+        var post = new Post(Guid.NewGuid(), "Post with media");
+
+        // Act
+        post.AddMediaAttachment("https://example.com/file", "file", contentType, 1024L);
+
+        // Assert
+        post.Type.Should().Be(expectedType);
+    }
+
+    [Fact]
+    public void CreatePost_WithNonTextTypeAndEmptyContent_ShouldNotThrowException()
+    {
+        // Arrange
+        var authorId = Guid.NewGuid();
+
+        // Act
+        var post = new Post(authorId, "", PostType.Image, PostVisibility.Public);
+
+        // Assert
+        post.Content.Should().Be("");
+        post.Type.Should().Be(PostType.Image);
+    }
+
+    [Fact]
+    public void UpdateContent_WithNullContentForNonTextPost_ShouldSetToEmptyString()
+    {
+        // Arrange
+        var post = new Post(Guid.NewGuid(), "Original content", PostType.Image);
+
+        // Act
+        post.UpdateContent(null);
+
+        // Assert
+        post.Content.Should().Be("");
+    }
+
+    [Fact]
+    public void UpdateContent_WithNullContentForTextPost_ShouldThrowArgumentException()
+    {
+        // Arrange
+        var post = new Post(Guid.NewGuid(), "Original content", PostType.Text);
+
+        // Act & Assert
+        var action = () => post.UpdateContent(null);
+
+        action.Should().Throw<ArgumentException>()
+            .WithMessage("Content cannot be empty for text posts*")
+            .And.ParamName.Should().Be("content");
+    }
+
+    [Fact]
+    public void CreatePost_WithNullContent_ShouldSetToEmptyString()
+    {
+        // Arrange
+        var authorId = Guid.NewGuid();
+
+        // Act
+        var post = new Post(authorId, null, PostType.Image, PostVisibility.Public);
+
+        // Assert
+        post.Content.Should().Be("");
+    }
+
+    [Fact]
+    public void AddMediaAttachment_ToPostWithoutMedia_ShouldChangeFromTextToMediaType()
+    {
+        // Arrange
+        var post = new Post(Guid.NewGuid(), "Text post");
+        post.Type.Should().Be(PostType.Text);
+
+        // Act
+        post.AddMediaAttachment("https://example.com/image.jpg", "image.jpg", "image/jpeg", 1024L);
+
+        // Assert
+        post.Type.Should().Be(PostType.Image);
+    }
+
+    [Fact]
+    public void CanBeViewedBy_FollowersOnlyPost_ShouldReturnFalseForNonFollower()
+    {
+        // Arrange
+        var author = new User("author@example.com", "author", "Author");
+        var nonFollower = new User("nonfollower@example.com", "nonfollower", "NonFollower");
+        var post = new Post(author.Id, "Followers only post", PostType.Text, PostVisibility.Followers);
+
+        // Act & Assert
+        post.CanBeViewedBy(nonFollower, author).Should().BeFalse();
+    }
+
+    [Fact]
+    public void CanBeViewedBy_FollowersOnlyPost_ShouldReturnFalseForPendingFollower()
+    {
+        // Arrange
+        var author = new User("author@example.com", "author", "Author");
+        var pendingFollower = new User("pending@example.com", "pending", "Pending");
+        var post = new Post(author.Id, "Followers only post", PostType.Text, PostVisibility.Followers);
+        
+        // Add pending follow relationship
+        var pendingFollow = new Follow(pendingFollower.Id, author.Id, requiresApproval: true);
+        // Don't accept the follow request
+        author.Followers.Add(pendingFollow);
+
+        // Act & Assert
+        post.CanBeViewedBy(pendingFollower, author).Should().BeFalse();
+    }
 }
