@@ -698,9 +698,12 @@ _site/
 # ===== TESTING =====
 # Test results
 test-results/
+TestResults/
 coverage/
+coveragereport/
 .coverage
 *.cover
+*.cobertura.xml
 
 # Test databases
 test.sqlite
@@ -709,6 +712,12 @@ test.db
 # Mock data
 mocks/
 fixtures/
+
+# .NET Test Coverage
+*.coverage
+*.coveragexml
+*.vscov
+*.vstest.log
 
 # ===== PROJECT SPECIFIC =====
 # Local environment overrides
