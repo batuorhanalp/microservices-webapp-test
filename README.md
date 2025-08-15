@@ -4,7 +4,7 @@
 
 ![Build Status](https://img.shields.io/badge/build-passing-brightgreen?style=for-the-badge&logo=github)
 ![Architecture](https://img.shields.io/badge/architecture-microservices-blue?style=for-the-badge&logo=kubernetes)
-![Services](https://img.shields.io/badge/microservices-4%20operational-success?style=for-the-badge&logo=docker)
+![Services](https://img.shields.io/badge/microservices-8%20operational-success?style=for-the-badge&logo=docker)
 ![.NET](https://img.shields.io/badge/.NET-8.0-purple?style=for-the-badge&logo=.net)
 ![Kubernetes](https://img.shields.io/badge/kubernetes-ready-326ce5?style=for-the-badge&logo=kubernetes)
 
@@ -19,7 +19,7 @@
 ![Monitoring](https://img.shields.io/badge/Monitoring-Prometheus%20%7C%20Grafana-E6522C?style=for-the-badge&logo=prometheus&logoColor=white)
 
 ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
-![Progress](https://img.shields.io/badge/progress-72%25-orange?style=for-the-badge)
+![Progress](https://img.shields.io/badge/progress-85%25-brightgreen?style=for-the-badge)
 ![Stars](https://img.shields.io/github/stars/batuorhanalp/microservices-webapp-test?style=for-the-badge&logo=github)
 ![Forks](https://img.shields.io/github/forks/batuorhanalp/microservices-webapp-test?style=for-the-badge&logo=github)
 
@@ -72,21 +72,26 @@ This is a **comprehensive, production-ready microservices web application** that
 - [x] Ingress with SSL termination and load balancing
 - [x] Horizontal Pod Autoscaling and security policies
 
-### Phase 5: Application Development 🚧
+### Phase 5: Application Development ✅
 - [x] Microservices architecture setup
+- [x] AuthService (JWT authentication, user management)
+- [x] UserService (user profiles, management)
 - [x] PostService (posts CRUD, validation)
 - [x] LikeService (post interactions, user tracking)
 - [x] CommentService (threaded comments, moderation)
-- [x] UserService (authentication, user profiles)
-- [ ] NotificationService (real-time notifications)
-- [ ] Frontend React app
-- [ ] WebSocket implementation
-- [ ] Database models and migrations
+- [x] NotificationService (real-time notifications)
+- [x] MediaUploadService (file upload, processing)
+- [x] MediaProcessingService (media transformation)
+- [x] API Gateway (request routing, authentication proxy)
+- [x] Frontend React app (Next.js, TypeScript)
+- [x] Database models and migrations
+- [x] Comprehensive test coverage
 
-### Phase 6: Local Development
-- [ ] Docker Compose setup
-- [ ] Local development environment
-- [ ] Testing and debugging
+### Phase 6: Local Development ✅
+- [x] Docker Compose infrastructure setup
+- [x] Local development environment
+- [x] Development scripts and automation
+- [x] Testing and debugging tools
 
 ### Phase 7: Cloud Deployments
 - [ ] Azure deployment
@@ -121,12 +126,18 @@ Each phase includes detailed instructions in its respective directory. Start wit
 
 ### ✅ **Operational Services**
 
-| Service | Status | Health Check | API Endpoints | Database | Features |
-|---------|--------|--------------|---------------|----------|---------|
-| **PostService** | 🟢 Running | `/health` | `/api/posts/*` | PostgreSQL | CRUD operations, validation |
-| **LikeService** | 🟢 Running | `/health` | `/api/likes/*` | PostgreSQL | Post interactions, user tracking |
-| **CommentService** | 🟢 Running | `/health` | `/api/comments/*` | PostgreSQL | Threaded comments, moderation |
-| **UserService** | 🟢 Running | `/health` | `/api/users/*` | PostgreSQL | Authentication, profiles |
+| Service | Port | Status | Health Check | API Endpoints | Database | Features |
+|---------|------|--------|--------------|---------------|----------|---------|
+| **AuthService** | 7001 | 🟢 Running | `/health` | `/api/auth/*` | PostgreSQL | JWT authentication, user management |
+| **UserService** | 7002 | 🟢 Running | `/health` | `/api/users/*` | PostgreSQL | User profiles, management |
+| **PostService** | 7003 | 🟢 Running | `/health` | `/api/posts/*` | PostgreSQL | CRUD operations, validation |
+| **LikeService** | 7004 | 🟢 Running | `/health` | `/api/likes/*` | PostgreSQL | Post interactions, user tracking |
+| **CommentService** | 7005 | 🟢 Running | `/health` | `/api/comments/*` | PostgreSQL | Threaded comments, moderation |
+| **NotificationService** | 7006 | 🟢 Running | `/health` | `/api/notifications/*` | PostgreSQL | Real-time notifications, alerts |
+| **MediaUploadService** | 7007 | 🟢 Running | `/health` | `/api/media/upload/*` | MinIO/S3 | File uploads, validation |
+| **MediaProcessingService** | 7008 | 🟢 Running | `/health` | `/api/media/process/*` | MinIO/S3 | Media transformation, optimization |
+| **API Gateway** | 7009 | 🟢 Running | `/health` | Proxy to all services | - | Request routing, authentication proxy |
+| **Frontend** | 3000 | 🟢 Running | `/` | Next.js app | - | React/TypeScript UI |
 
 ### 📦 **Shared Components**
 - **WebApp.Common**: Shared library with common models, DTOs, and utilities
@@ -156,13 +167,16 @@ services/{service-name}/
 | **PostgreSQL** | 13+ | Primary database | ✅ Production |
 | **Redis** | 7.0+ | Caching and sessions | ✅ Production |
 
-### **Frontend & UI**
+### **Frontend \u0026 UI**
 | Technology | Version | Purpose | Status |
 |------------|---------|---------|--------|
-| **React** | 18+ | Frontend framework | 🚧 Planned |
-| **TypeScript** | 5.0+ | Type-safe development | 🚧 Planned |
-| **Material-UI** | 5.0+ | Component library | 🚧 Planned |
-| **NGINX** | 1.24+ | Web server & reverse proxy | ✅ Ready |
+| **React** | 18+ | Frontend framework | ✅ Production |
+| **Next.js** | 14+ | Full-stack React framework | ✅ Production |
+| **TypeScript** | 5.0+ | Type-safe development | ✅ Production |
+| **Tailwind CSS** | 3.0+ | Utility-first CSS framework | ✅ Production |
+| **Zustand** | 4.0+ | State management | ✅ Production |
+| **React Hook Form** | 7.0+ | Form handling | ✅ Production |
+| **NGINX** | 1.24+ | Web server \u0026 reverse proxy | ✅ Ready |
 
 ### **Container & Orchestration**
 | Technology | Version | Purpose | Status |
@@ -338,7 +352,7 @@ terraform init && terraform apply
 3. Analyze [Security Multi-Cloud Strategy](docs/security-multi-cloud.md)
 4. Understand [Kubernetes Production Setup](docs/phase4-kubernetes-dotnet.md)
 
-## Project Progress: 72% Complete 🚀
+## Project Progress: 85% Complete 🚀
 
 | Phase | Status | Completion |
 |-------|--------|------------|
@@ -346,10 +360,11 @@ terraform init && terraform apply
 | Azure Infrastructure | ✅ Complete | 100% |
 | Multi-Cloud Setup | ✅ Complete | 100% |
 | Kubernetes Config | ✅ Complete | 100% |
-| Application Dev | 🚧 In Progress | 55% |
-| └─ Microservices | ✅ 4/4 Services | 100% |
-| └─ Frontend | ⏳ Planned | 0% |
-| Local Development | ⏳ Planned | 0% |
+| Application Dev | ✅ Complete | 100% |
+| └─ Microservices | ✅ 8/8 Services | 100% |
+| └─ Frontend | ✅ Complete | 100% |
+| └─ API Gateway | ✅ Complete | 100% |
+| Local Development | ✅ Complete | 100% |
 | Cloud Deployments | ⏳ Planned | 0% |
 
 ---
