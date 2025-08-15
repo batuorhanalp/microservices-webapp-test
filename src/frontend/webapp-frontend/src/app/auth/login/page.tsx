@@ -15,6 +15,7 @@ import { LoginFormData } from '@/types';
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
   password: z.string().min(1, 'Password is required'),
+  rememberMe: z.boolean().optional(),
 });
 
 export default function LoginPage() {
@@ -44,7 +45,13 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      await login(data);
+      // Map form data to API format
+      const loginRequest = {
+        emailOrUsername: data.email,
+        password: data.password,
+        rememberMe: data.rememberMe || false,
+      };
+      await login(loginRequest);
       router.push('/');
     } catch (error) {
       // Error is handled by the store
@@ -111,8 +118,8 @@ export default function LoginPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <input
+                {...register('rememberMe')}
                 id="remember-me"
-                name="remember-me"
                 type="checkbox"
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />

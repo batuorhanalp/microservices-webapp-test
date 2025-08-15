@@ -21,8 +21,9 @@ export interface UserProfile extends User {
 
 // Authentication types
 export interface LoginRequest {
-  email: string;
+  emailOrUsername: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface RegisterRequest {
@@ -166,6 +167,7 @@ export interface ApiError {
 export interface LoginFormData {
   email: string;
   password: string;
+  rememberMe?: boolean;
 }
 
 export interface RegisterFormData {
