@@ -1,11 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
-// Create a client
-const queryClient = new QueryClient({
+// Function to create a new QueryClient
+const createQueryClient = () => new QueryClient({
   defaultOptions: {
     queries: {
       // Time before data is considered stale
@@ -36,6 +36,9 @@ interface ProvidersProps {
 }
 
 export const Providers: React.FC<ProvidersProps> = ({ children }) => {
+  // Create QueryClient only once per component lifecycle to prevent hydration issues
+  const [queryClient] = useState(() => createQueryClient());
+
   return (
     <QueryClientProvider client={queryClient}>
       {children}

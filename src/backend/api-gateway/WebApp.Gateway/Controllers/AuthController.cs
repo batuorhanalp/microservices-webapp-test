@@ -13,7 +13,7 @@ public class AuthController : ControllerBase
     private readonly ILogger<AuthController> _logger;
 
     // Actual port where Auth service is running
-    private const string AUTH_SERVICE_URL = "http://localhost:5199";
+    private const string AUTH_SERVICE_URL = "http://localhost:7001";
 
     public AuthController(HttpClient httpClient, IConfiguration configuration, ILogger<AuthController> logger)
     {

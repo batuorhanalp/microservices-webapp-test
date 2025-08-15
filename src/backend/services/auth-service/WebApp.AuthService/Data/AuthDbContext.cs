@@ -38,6 +38,9 @@ public class AuthDbContext : DbContext
             entity.Property(u => u.CoverImageUrl).HasMaxLength(500);
             entity.Property(u => u.EmailConfirmationToken).HasMaxLength(64);
             entity.Property(u => u.TwoFactorSecret).HasMaxLength(32);
+            
+            // Ignore Post navigation property to avoid Post relationship validation issues
+            entity.Ignore(u => u.Posts);
 
             // Configure relationships
             entity.HasMany<RefreshToken>()
@@ -66,10 +69,14 @@ public class AuthDbContext : DbContext
             
             entity.Property(rt => rt.Token).IsRequired().HasMaxLength(64);
             entity.Property(rt => rt.JwtId).IsRequired().HasMaxLength(64);
-            entity.Property(rt => rt.CreatedByIp).HasMaxLength(45);
             entity.Property(rt => rt.RevokedByIp).HasMaxLength(45);
             entity.Property(rt => rt.RevokedReason).HasMaxLength(200);
             entity.Property(rt => rt.ReplacedByToken).HasMaxLength(64);
+            
+            // Ignore computed properties without backing fields
+            entity.Ignore(rt => rt.CreatedByIp);
+            entity.Ignore(rt => rt.IsActive);
+            entity.Ignore(rt => rt.IsExpired);
         });
 
         // Configure PasswordResetToken entity
@@ -82,6 +89,10 @@ public class AuthDbContext : DbContext
             
             entity.Property(prt => prt.Token).IsRequired().HasMaxLength(64);
             entity.Property(prt => prt.IpAddress).HasMaxLength(45);
+            
+            // Ignore computed properties without backing fields
+            entity.Ignore(prt => prt.IsValid);
+            entity.Ignore(prt => prt.IsExpired);
         });
 
         // Configure UserSession entity
@@ -97,6 +108,10 @@ public class AuthDbContext : DbContext
             entity.Property(us => us.UserAgent).HasMaxLength(500);
             entity.Property(us => us.DeviceInfo).HasMaxLength(200);
             entity.Property(us => us.Location).HasMaxLength(100);
+            
+            // Ignore computed properties without backing fields
+            entity.Ignore(us => us.IsExpired);
+            entity.Ignore(us => us.IsValidSession);
         });
     }
 }

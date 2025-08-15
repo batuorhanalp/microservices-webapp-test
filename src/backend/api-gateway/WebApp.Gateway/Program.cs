@@ -66,9 +66,9 @@ if (app.Environment.IsDevelopment())
         c.SwaggerEndpoint("http://localhost:7001/swagger/v1/swagger.json", "Auth Service");
         c.SwaggerEndpoint("http://localhost:7002/swagger/v1/swagger.json", "User Service");
         c.SwaggerEndpoint("http://localhost:7003/swagger/v1/swagger.json", "Post Service");
-        c.SwaggerEndpoint("http://localhost:7004/swagger/v1/swagger.json", "Notification Service");
-        c.SwaggerEndpoint("http://localhost:7005/swagger/v1/swagger.json", "Like Service");
-        c.SwaggerEndpoint("http://localhost:7006/swagger/v1/swagger.json", "Comment Service");
+        c.SwaggerEndpoint("http://localhost:7004/swagger/v1/swagger.json", "Like Service");
+        c.SwaggerEndpoint("http://localhost:7005/swagger/v1/swagger.json", "Comment Service");
+        c.SwaggerEndpoint("http://localhost:7006/swagger/v1/swagger.json", "Notification Service");
         c.SwaggerEndpoint("http://localhost:7007/swagger/v1/swagger.json", "Media Upload Service");
         c.SwaggerEndpoint("http://localhost:7008/swagger/v1/swagger.json", "Media Processing Service");
         
@@ -92,9 +92,9 @@ app.MapGet("/services", () => new
         new { Name = "Auth Service", Url = "http://localhost:7001", SwaggerUrl = "http://localhost:7001/swagger" },
         new { Name = "User Service", Url = "http://localhost:7002", SwaggerUrl = "http://localhost:7002/swagger" },
         new { Name = "Post Service", Url = "http://localhost:7003", SwaggerUrl = "http://localhost:7003/swagger" },
-        new { Name = "Notification Service", Url = "http://localhost:7004", SwaggerUrl = "http://localhost:7004/swagger" },
-        new { Name = "Like Service", Url = "http://localhost:7005", SwaggerUrl = "http://localhost:7005/swagger" },
-        new { Name = "Comment Service", Url = "http://localhost:7006", SwaggerUrl = "http://localhost:7006/swagger" },
+        new { Name = "Like Service", Url = "http://localhost:7004", SwaggerUrl = "http://localhost:7004/swagger" },
+        new { Name = "Comment Service", Url = "http://localhost:7005", SwaggerUrl = "http://localhost:7005/swagger" },
+        new { Name = "Notification Service", Url = "http://localhost:7006", SwaggerUrl = "http://localhost:7006/swagger" },
         new { Name = "Media Upload Service", Url = "http://localhost:7007", SwaggerUrl = "http://localhost:7007/swagger" },
         new { Name = "Media Processing Service", Url = "http://localhost:7008", SwaggerUrl = "http://localhost:7008/swagger" }
     }

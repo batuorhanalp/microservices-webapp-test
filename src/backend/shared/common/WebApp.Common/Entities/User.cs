@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WebApp.Common.Entities;
 
@@ -61,8 +62,10 @@ public class User
     // Navigation properties - Removed virtual for performance, use explicit loading when needed
     public ICollection<Post> Posts { get; private set; } = new List<Post>();
     
+    [NotMapped]
     public ICollection<Follow> Followers { get; private set; } = new List<Follow>();
     
+    [NotMapped]
     public ICollection<Follow> Following { get; private set; } = new List<Follow>();
     
     // Performance: Don't load these collections by default - use explicit queries

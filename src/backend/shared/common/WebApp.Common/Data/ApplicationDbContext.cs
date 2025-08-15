@@ -70,16 +70,18 @@ public class ApplicationDbContext : DbContext
                   .HasForeignKey(p => p.AuthorId)
                   .OnDelete(DeleteBehavior.Cascade);
                   
-            // Self-referencing for replies
+            // Self-referencing for replies - configure each relationship separately
             entity.HasOne(p => p.ParentPost)
                   .WithMany()
                   .HasForeignKey(p => p.ParentPostId)
-                  .OnDelete(DeleteBehavior.Restrict);
+                  .OnDelete(DeleteBehavior.Restrict)
+                  .IsRequired(false);
                   
             entity.HasOne(p => p.RootPost)
                   .WithMany()
                   .HasForeignKey(p => p.RootPostId)
-                  .OnDelete(DeleteBehavior.Restrict);
+                  .OnDelete(DeleteBehavior.Restrict)
+                  .IsRequired(false);
                   
             // Indexes for performance
             entity.HasIndex(e => e.AuthorId);
@@ -111,14 +113,14 @@ public class ApplicationDbContext : DbContext
         {
             entity.HasKey(e => e.Id);
             
-            // Relationships
+            // Relationships without User navigation properties (since we ignored them)
             entity.HasOne(f => f.Follower)
-                  .WithMany(u => u.Following)
+                  .WithMany()
                   .HasForeignKey(f => f.FollowerId)
                   .OnDelete(DeleteBehavior.Restrict);
                   
             entity.HasOne(f => f.Followee)
-                  .WithMany(u => u.Followers)
+                  .WithMany()
                   .HasForeignKey(f => f.FolloweeId)
                   .OnDelete(DeleteBehavior.Restrict);
             
@@ -264,6 +266,11 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.RevokedReason).HasMaxLength(200);
             entity.Property(e => e.ReplacedByToken).HasMaxLength(500);
             
+            // Ignore computed properties that don't have backing fields
+            entity.Ignore(e => e.CreatedByIp); // This is a computed property => IpAddress
+            entity.Ignore(e => e.IsActive);     // This is a computed property with business logic
+            entity.Ignore(e => e.IsExpired);    // This is a computed property with business logic
+            
             // Relationships
             entity.HasOne(rt => rt.User)
                   .WithMany()
@@ -283,6 +290,10 @@ public class ApplicationDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Token).IsRequired().HasMaxLength(500);
             entity.Property(e => e.IpAddress).HasMaxLength(45);
+            
+            // Ignore computed properties that don't have backing fields
+            entity.Ignore(e => e.IsValid);     // This is a computed property with business logic
+            entity.Ignore(e => e.IsExpired);   // This is a computed property with business logic
             
             // Relationships
             entity.HasOne(prt => prt.User)
@@ -306,6 +317,10 @@ public class ApplicationDbContext : DbContext
             entity.Property(e => e.UserAgent).HasMaxLength(500);
             entity.Property(e => e.DeviceInfo).HasMaxLength(200);
             entity.Property(e => e.Location).HasMaxLength(100);
+            
+            // Ignore computed properties that don't have backing fields
+            entity.Ignore(e => e.IsExpired);      // This is a computed property with business logic
+            entity.Ignore(e => e.IsValidSession); // This is a computed property with business logic
             
             // Relationships
             entity.HasOne(us => us.User)

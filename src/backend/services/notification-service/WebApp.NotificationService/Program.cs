@@ -14,7 +14,7 @@ builder.Services.AddSwaggerGen();
 
 // Database configuration
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? 
-    "Host=localhost;Database=webapp_notificationservice;Username=webapp;Password=webapp123;Include Error Detail=true";
+    "Server=localhost;Database=webapp_auth;User Id=webapp_user;Password=webapp_dev_password;TrustServerCertificate=true;";
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));

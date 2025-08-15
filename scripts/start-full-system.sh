@@ -86,7 +86,7 @@ echo ""
 echo -e "🚪 ${BLUE}Step 4: Starting API Gateway${NC}"
 echo "-----------------------------"
 cd src/backend/api-gateway/WebApp.Gateway || exit
-export ASPNETCORE_URLS="http://localhost:5080;https://localhost:5081"
+export ASPNETCORE_URLS="http://localhost:7009;https://localhost:7049"
 export ASPNETCORE_ENVIRONMENT=Development
 nohup dotnet run --no-build > ../../../../logs/gateway.log 2>&1 &
 gateway_pid=$!
@@ -121,8 +121,8 @@ echo -e "🎉 ${GREEN}System startup complete!${NC}"
 echo ""
 echo -e "📋 ${BLUE}Quick Access:${NC}"
 echo -e "  🌐 Frontend:      ${YELLOW}http://localhost:3000${NC}"
-echo -e "  🚪 API Gateway:   ${YELLOW}http://localhost:5080${NC}"
-echo -e "  📊 Swagger:       ${YELLOW}http://localhost:5080/swagger${NC}"
+echo -e "  🚪 API Gateway:   ${YELLOW}http://localhost:7009${NC}"
+echo -e "  📊 Swagger:       ${YELLOW}http://localhost:7009/swagger${NC}"
 echo -e "  🐘 Database:      ${YELLOW}http://localhost:8080${NC}"
 echo ""
 echo -e "🛑 ${BLUE}To stop all services:${NC} ./scripts/stop-services.sh"

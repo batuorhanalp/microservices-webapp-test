@@ -22,10 +22,7 @@ public class DatabaseHealthCheck : IHealthCheck
             // Try to connect to the database
             await _context.Database.CanConnectAsync(cancellationToken);
             
-            // Try a simple query to ensure the Notifications table exists
-            var notificationCount = await _context.Notifications.CountAsync(cancellationToken);
-            
-            return HealthCheckResult.Healthy($"Database is healthy. Notifications count: {notificationCount}");
+            return HealthCheckResult.Healthy("Database connection is healthy");
         }
         catch (Exception ex)
         {

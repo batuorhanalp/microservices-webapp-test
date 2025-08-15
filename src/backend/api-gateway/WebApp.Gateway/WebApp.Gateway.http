@@ -1,4 +1,4 @@
-@WebApp.Gateway_HostAddress = http://localhost:5080
+@WebApp.Gateway_HostAddress = http://localhost:7009
 
 GET {{WebApp.Gateway_HostAddress}}/weatherforecast/
 Accept: application/json

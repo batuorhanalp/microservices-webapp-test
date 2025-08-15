@@ -99,7 +99,7 @@ rm -f logs/*.log logs/*.pid logs/*.port
 
 # Stop any existing services on our ports
 echo "🛑 Stopping any existing services..."
-for port in 5080 7001 7002 7003 7004 7005 7006 7007 7008; do
+for port in 7009 7001 7002 7003 7004 7005 7006 7007 7008; do
     pid=$(lsof -ti:$port 2>/dev/null)
     if [ ! -z "$pid" ]; then
         echo "🛑 Stopping process on port $port (PID: $pid)"
@@ -154,7 +154,7 @@ sleep 5
 
 # Start API Gateway last (so it can connect to services)
 echo "🌐 Starting API Gateway..."
-gateway_port=$(find_available_port 5080)
+gateway_port=$(find_available_port 7009)
 if start_service "gateway" "src/backend/api-gateway/WebApp.Gateway" "$gateway_port"; then
     started_services+=("gateway")
 fi
