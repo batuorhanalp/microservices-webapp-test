@@ -69,8 +69,8 @@ export default function RegisterPage() {
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
-      const { confirmPassword, ...registerData } = data;
-      await registerUser(registerData);
+      // Send all data including confirmPassword as expected by backend
+      await registerUser(data);
       router.push('/');
     } catch (error) {
       // Error is handled by the store

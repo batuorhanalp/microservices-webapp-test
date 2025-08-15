@@ -31,6 +31,7 @@ export interface RegisterRequest {
   username: string;
   displayName: string;
   password: string;
+  confirmPassword: string;
 }
 
 export interface AuthResponse {
